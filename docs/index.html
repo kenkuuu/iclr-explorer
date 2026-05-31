@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ICLR 2026 Topic Explorer</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#fff;--bg-alt:#f5f5f7;--bg-soft:#fafafa;
+  --panel:#fff;--border:#d2d2d7;--border-soft:#e5e5ea;
+  --text:#1d1d1f;--text-2:#424245;--muted:#6e6e73;--muted-2:#86868b;
+  --accent:#0066cc;--accent-soft:rgba(0,102,204,.08);
+  --green:#248a3d;--orange:#b25000;--purple:#6e3ad6;
+  --shadow:0 1px 3px rgba(0,0,0,.04),0 1px 2px rgba(0,0,0,.06);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:var(--font);font-size:15px;line-height:1.47;color:var(--text);background:var(--bg)}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit}
+
+/* ── Topbar ── */
+.topbar{position:sticky;top:0;z-index:50;height:52px;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border-soft)}
+.topbar .inner{max-width:1200px;margin:0 auto;padding:0 24px;height:100%;display:flex;align-items:center;gap:18px}
+.topbar h1{font-size:15px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+.topbar .pills{display:flex;gap:8px;flex-wrap:wrap}
+.stat-pill{font-size:11px;padding:3px 10px;border-radius:20px;background:var(--bg-alt);border:1px solid var(--border-soft);color:var(--muted);white-space:nowrap}
+.stat-pill.accent{background:var(--accent);color:#fff;border-color:var(--accent)}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.download-btn{font-size:11px;padding:4px 12px;border-radius:5px;background:var(--bg-alt);border:1px solid var(--border);color:var(--text-2)}
+
+/* ── Layout ── */
+.layout{max-width:1200px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:220px minmax(0,1fr);gap:32px}
+aside{position:sticky;top:64px;max-height:calc(100vh - 64px);overflow-y:auto;padding:28px 0;align-self:start}
+aside nav a{display:block;padding:5px 8px;font-size:13px;color:var(--muted);border-radius:5px}
+aside nav a:hover{color:var(--text);background:var(--bg-alt);text-decoration:none}
+aside nav .section-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);padding:14px 8px 4px;margin-top:4px}
+main{padding:48px 0 80px}
+section{margin-bottom:64px}
+h2{font-size:28px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+h3{font-size:16px;font-weight:600;margin-bottom:12px}
+p.lead{font-size:15px;color:var(--muted);margin-bottom:20px}
+
+/* ── KPI cards ── */
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;padding:18px}
+.kpi.total{border-color:rgba(0,102,204,.22);background:linear-gradient(180deg,#fff,#f8fbff)}
+.kpi .v{font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-top:4px}
+.kpi .sub{font-size:11px;color:var(--muted-2);margin-top:2px}
+
+/* ── Two-col ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-box{background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;padding:18px}
+.chart-box.tall{height:440px}
+.chart-box canvas{width:100%!important}
+.chart-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:12px}
+
+/* ── Tree panel ── */
+.tree-panel{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px}
+.tree-list{font-size:13px;max-height:600px;overflow-y:auto;background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;padding:12px}
+.tree-node{border-left:1px solid var(--border-soft);margin-left:9px;padding-left:10px}
+.tree-node:first-child{border-left:none;margin-left:0;padding-left:0}
+.tree-row{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:6px;cursor:pointer;user-select:none}
+.tree-row:hover{background:var(--bg-alt)}
+.tree-row.active{background:var(--accent);color:#fff}
+.tree-row.active .tree-count{color:rgba(255,255,255,.7)}
+.tree-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.tree-row.d0 .tree-dot{width:9px;height:9px}
+.tree-row.d0 b{font-size:13px}
+.tree-row.d1 b{font-size:12px}
+.tree-row.d2,.tree-row.d3{opacity:.88}
+.tree-row.d2 b,.tree-row.d3 b{font-weight:400;font-size:12px}
+.tree-count{margin-left:auto;font-size:11px;color:var(--muted-2);background:var(--bg-alt);padding:0 5px;border-radius:3px;min-width:28px;text-align:right}
+
+/* ── Filter toolbar ── */
+.toolbar{background:var(--bg-soft);border:1px solid var(--border-soft);border-radius:10px;padding:14px 16px;margin-bottom:12px;display:flex;flex-direction:column;gap:8px}
+.toolbar-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toolbar input[type=search],.toolbar select{font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);outline:none;height:32px}
+.toolbar input[type=search]{flex:1 1 200px;min-width:120px}
+.toolbar input[type=search]:focus,.toolbar select:focus{border-color:var(--accent)}
+.toolbar .mode-label{font-size:11px;color:var(--muted);white-space:nowrap}
+.btn-clear{font-size:12px;padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--muted);height:32px}
+.btn-clear:hover{border-color:var(--border);background:var(--bg-alt)}
+.active-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.filter-chip{font-size:12px;padding:3px 10px;background:var(--accent-soft);border:1px solid rgba(0,102,204,.2);border-radius:20px;color:var(--accent);cursor:pointer}
+.filter-chip:hover{background:rgba(0,102,204,.12)}
+.count-label{font-size:13px;color:var(--muted);font-weight:500}
+
+/* ── Paper cards ── */
+#papers{display:flex;flex-direction:column;gap:8px}
+.paper{background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;padding:14px 16px;transition:border-color .15s,box-shadow .15s}
+.paper:hover{border-color:var(--border);box-shadow:var(--shadow)}
+.paper .meta{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em}
+.badge.Oral{background:rgba(110,58,214,.1);color:var(--purple)}
+.badge.Poster{background:var(--bg-alt);color:var(--muted)}
+.phylum-tag{font-size:11px;color:var(--muted);background:var(--bg-alt);padding:2px 8px;border-radius:4px;cursor:pointer}
+.phylum-tag:hover{background:var(--accent-soft);color:var(--accent)}
+.paper .title{font-size:14px;font-weight:600;color:var(--text);cursor:pointer;line-height:1.4;margin-bottom:4px}
+.paper .title:hover{color:var(--accent)}
+.paper .authors{font-size:12px;color:var(--muted);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.paper .topics{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px}
+.topic-chip{font-size:10px;padding:1px 6px;border-radius:3px;background:var(--bg-alt);color:var(--muted-2);cursor:pointer}
+.topic-chip:hover{background:var(--accent-soft);color:var(--accent)}
+.paper .abstract{display:none;font-size:12px;color:var(--text-2);line-height:1.6;margin-top:8px;padding-top:8px;border-top:1px solid var(--border-soft)}
+.paper.open .abstract{display:block}
+.paper .paper-link{font-size:11px;color:var(--accent);margin-left:auto}
+
+/* ── Pager ── */
+.pager{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:20px}
+.pager span{font-size:13px;color:var(--muted)}
+
+/* ── Search mark ── */
+mark{background:#fff3a8;border-radius:2px}
+
+/* ── Responsive ── */
+@media(max-width:1000px){
+  .layout{grid-template-columns:1fr}
+  aside{display:none}
+  .kpis{grid-template-columns:repeat(3,1fr)}
+  .two-col,.tree-panel{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .layout{padding:0 12px}
+  .kpis{grid-template-columns:1fr 1fr}
+  .topbar .pills{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="inner">
+    <h1>ICLR 2026 Topic Explorer</h1>
+    <div class="pills" id="topPills"></div>
+    <div class="right">
+      <a class="download-btn" href="data/papers.json" download>↓ papers.json</a>
+    </div>
+  </div>
+</div>
+
+<!-- Layout -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside>
+    <nav>
+      <div class="section-label">Overview</div>
+      <a href="#overview">Statistics</a>
+      <a href="#dist">Topic Distribution</a>
+      <div class="section-label">Taxonomy</div>
+      <a href="#phylogeny">Phylogeny Tree</a>
+      <div class="section-label">Papers</div>
+      <a href="#search">Search & Filter</a>
+    </nav>
+  </aside>
+
+  <main>
+
+    <!-- ── Overview ── -->
+    <section id="overview">
+      <h2>ICLR 2026</h2>
+      <p class="lead">Accepted papers · Topic Phylogeny · Data from <a href="https://openreview.net" target="_blank">OpenReview</a> (CC0)</p>
+      <div class="kpis" id="kpis"></div>
+    </section>
+
+    <!-- ── Topic Distribution ── -->
+    <section id="dist">
+      <h2>Topic Distribution</h2>
+      <p class="lead">Click any bar to filter papers by topic.</p>
+      <div class="two-col">
+        <div class="chart-box tall">
+          <div class="chart-title">By Phylum</div>
+          <canvas id="phylumChart"></canvas>
+        </div>
+        <div class="chart-box tall">
+          <div class="chart-title">Top Classes</div>
+          <canvas id="classChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Phylogeny Tree ── -->
+    <section id="phylogeny">
+      <h2>Topic Phylogeny</h2>
+      <p class="lead">Phylum → Class → Order → Genus · Click a node to filter papers.</p>
+      <div class="tree-panel">
+        <div class="tree-list" id="treeList"></div>
+        <div class="chart-box tall">
+          <div class="chart-title" id="lineageTitle">Select a node to explore</div>
+          <canvas id="lineageChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Search ── -->
+    <section id="search">
+      <h2>Papers</h2>
+
+      <div class="toolbar">
+        <div class="toolbar-row">
+          <input type="search" id="q"  placeholder="Search title, abstract…"/>
+          <select id="searchMode"><option value="and">AND</option><option value="or">OR</option></select>
+          <input type="search" id="q2" placeholder="Search 2"/>
+          <input type="search" id="q3" placeholder="Search 3"/>
+        </div>
+        <div class="toolbar-row">
+          <select id="typeFilter">
+            <option value="">All types</option>
+            <option value="Oral">Oral</option>
+            <option value="Poster">Poster</option>
+          </select>
+          <select id="phylumFilter"><option value="">All phylums</option></select>
+          <select id="classFilter"><option value="">All classes</option></select>
+          <select id="genusFilter"><option value="">All genera</option></select>
+        </div>
+        <div class="toolbar-row">
+          <select id="sortFilter">
+            <option value="default">Sort: original order</option>
+            <option value="rating-desc">Rating ↓</option>
+            <option value="title-asc">Title A–Z</option>
+          </select>
+          <select id="pageSizeFilter">
+            <option value="50">50 / page</option>
+            <option value="100">100 / page</option>
+            <option value="250">250 / page</option>
+          </select>
+          <button class="btn-clear" id="clearFilters">Clear all</button>
+          <span class="count-label" id="count"></span>
+        </div>
+      </div>
+
+      <div class="active-filters" id="activeFilters"></div>
+      <div id="papers"></div>
+      <div class="pager" id="pager"></div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// Data
+// ════════════════════════════════════════════════
+const TOTAL_SUBMISSIONS = 19814;
+let PAPERS = [], TREE = null;
+let page = 1;
+const state = { genus:"", phylum:"", class:"", order:"" };
+
+const PHYLUM_COLORS = {
+  "Large Language Models":       "#4FB6C6",
+  "Multimodal & Vision-Language":"#F0B429",
+  "Generative Models":           "#E07B54",
+  "Computer Vision":             "#3498DB",
+  "Reinforcement Learning":      "#7B5EA7",
+  "Embodied AI & Robotics":      "#E67E22",
+  "ML Theory & Efficient ML":    "#6B7280",
+  "Safety, Robustness & Privacy":"#E74C3C",
+  "Scientific & Domain Applications":"#34A853",
+  "Datasets & Evaluation":       "#94a3b8",
+};
+const PALETTE = Object.values(PHYLUM_COLORS);
+
+const $ = id => document.getElementById(id);
+const fmt = n => Number(n).toLocaleString();
+function escHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") }
+
+// ════════════════════════════════════════════════
+// Load
+// ════════════════════════════════════════════════
+Promise.all([
+  fetch("data/papers.json").then(r=>r.json()),
+  fetch("data/phylogeny.json").then(r=>r.json()),
+]).then(([pd, tree]) => {
+  PAPERS = pd.papers || [];
+  TREE   = tree;
+  init();
+}).catch(e => {
+  document.body.innerHTML = `<div style="padding:40px;color:#c00">Load error: ${e.message}</div>`;
+});
+
+// ════════════════════════════════════════════════
+// Init
+// ════════════════════════════════════════════════
+function init(){
+  buildKpis();
+  buildPhylumChart();
+  buildClassChart();
+  buildTree();
+  populateFilters();
+  bindEvents();
+  renderResults();
+}
+
+// ── KPIs ──
+function buildKpis(){
+  const oral    = PAPERS.filter(p=>p.status==="Oral").length;
+  const poster  = PAPERS.filter(p=>p.status==="Poster").length;
+  const rated   = PAPERS.filter(p=>p.rating_avg>0);
+  const avgR    = rated.length ? (rated.reduce((s,p)=>s+p.rating_avg,0)/rated.length).toFixed(2) : "—";
+  const sortedR = rated.map(p=>p.rating_avg).sort((a,b)=>a-b);
+  const medR    = sortedR.length ? sortedR[Math.floor(sortedR.length/2)].toFixed(1) : "—";
+  const accRate = (PAPERS.length/TOTAL_SUBMISSIONS*100).toFixed(1);
+
+  $("kpis").innerHTML = [
+    {label:"Total Submitted",  v:fmt(TOTAL_SUBMISSIONS), sub:""},
+    {label:"Accepted",         v:fmt(PAPERS.length),     sub:`${accRate}% acceptance rate`},
+    {label:"Oral",             v:fmt(oral),              sub:`${(oral/PAPERS.length*100).toFixed(1)}% of accepted`},
+    {label:"Avg. Rating",      v:avgR,                   sub:`Median: ${medR}`},
+    {label:"Phylums",          v:"10",                   sub:`${PAPERS.filter(p=>p.topics?.length>1).length.toLocaleString()} multi-labeled`},
+  ].map((k,i)=>`<div class="kpi${i===0?" total":""}">
+    <div class="v">${k.v}</div><div class="l">${k.label}</div><div class="sub">${k.sub}</div>
+  </div>`).join("");
+
+  $("topPills").innerHTML = [
+    `<span class="stat-pill accent">${fmt(PAPERS.length)} accepted</span>`,
+    `<span class="stat-pill">${accRate}% rate</span>`,
+    `<span class="stat-pill">${fmt(oral)} oral</span>`,
+  ].join("");
+}
+
+// ── Phylum Chart ──
+let phylumChartInst;
+function buildPhylumChart(){
+  const cnt = {};
+  PAPERS.forEach(p=>{ const ph=(p.topics||[])[0]?.phylum; if(ph) cnt[ph]=(cnt[ph]||0)+1; });
+  const rows = Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+  const labels=rows.map(r=>r[0]), vals=rows.map(r=>r[1]);
+  const colors=labels.map(l=>PHYLUM_COLORS[l]||"#94a3b8");
+  phylumChartInst = new Chart($("phylumChart"),{
+    type:"bar",
+    data:{labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:4}]},
+    options:{
+      indexAxis:"y",maintainAspectRatio:false,
+      onClick:(_,els)=>{ if(els.length) setPhylumFilter(labels[els[0].index]); },
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${fmt(ctx.raw)} papers (${(ctx.raw/PAPERS.length*100).toFixed(1)}%)`}}},
+      scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:11}},grid:{display:false}}},
+    }
+  });
+}
+
+function buildClassChart(){
+  const cnt={};
+  PAPERS.forEach(p=>(p.topics||[]).forEach(t=>{ cnt[t.class]=(cnt[t.class]||0)+1; }));
+  const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,16);
+  const labels=rows.map(r=>r[0]),vals=rows.map(r=>r[1]);
+  new Chart($("classChart"),{
+    type:"bar",
+    data:{labels,datasets:[{data:vals,backgroundColor:"#4FB6C6",borderRadius:4}]},
+    options:{
+      indexAxis:"y",maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${fmt(ctx.raw)} papers`}}},
+      scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:11}},grid:{display:false}}},
+    }
+  });
+}
+
+// ── Tree ──
+let lineageChartInst;
+function nodeHtml(n, depth=0){
+  const kids = n.children||[];
+  const cntTxt = n.paper_count>0 ? `<span class="tree-count">${fmt(n.paper_count)}</span>` : "";
+  const isRoot = depth===0 && n.name===TREE.name;
+  if(isRoot) return kids.map(k=>nodeHtml(k,0)).join("");
+  const row = `<div class="tree-row d${depth}" data-name="${escHtml(n.name)}" data-depth="${depth}">
+    <span class="tree-dot" style="opacity:${Math.max(.35,1-depth*.15)};background:${PHYLUM_COLORS[n.name]||"var(--accent)"}"></span>
+    <b>${escHtml(n.name)}</b>${cntTxt}
+  </div>`;
+  const inner = kids.length ? `<div class="tree-node">${kids.map(k=>nodeHtml(k,depth+1)).join("")}</div>` : "";
+  return `<div>${row}${inner}</div>`;
+}
+
+function buildTree(){
+  if(!TREE) return;
+  $("treeList").innerHTML = nodeHtml(TREE, 0);
+  $("treeList").addEventListener("click", e=>{
+    const row = e.target.closest(".tree-row");
+    if(!row) return;
+    const name  = row.dataset.name;
+    const depth = parseInt(row.dataset.depth);
+    // Toggle selection
+    const was = row.classList.contains("active");
+    document.querySelectorAll(".tree-row.active").forEach(r=>r.classList.remove("active"));
+    if(!was){
+      row.classList.add("active");
+      const node = findNode(TREE, name);
+      if(node){
+        showLineage(node, name, depth);
+        setStateFromDepth(name, depth);
+      }
+    } else {
+      clearLineageChart();
+      clearStateFromDepth(depth);
+    }
+    page=1; renderResults();
+  });
+}
+
+function findNode(n, name){
+  if(n.name===name) return n;
+  for(const c of (n.children||[])){
+    const found=findNode(c,name);
+    if(found) return found;
+  }
+  return null;
+}
+
+function showLineage(node, name, depth){
+  const kids=(node.children||[]).slice(0,18);
+  if(!kids.length){ clearLineageChart(); return; }
+  $("lineageTitle").textContent = name;
+  const labels=kids.map(k=>k.name), vals=kids.map(k=>k.paper_count||0);
+  const colors=kids.map(k=>PHYLUM_COLORS[k.name]||"#4FB6C6");
+  if(lineageChartInst) lineageChartInst.destroy();
+  lineageChartInst = new Chart($("lineageChart"),{
+    type:"bar",
+    data:{labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:4}]},
+    options:{
+      indexAxis:"y",maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${fmt(ctx.raw)} papers`}}},
+      scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:11}},grid:{display:false}}},
+    }
+  });
+}
+
+function clearLineageChart(){
+  $("lineageTitle").textContent="Select a node to explore";
+  if(lineageChartInst){ lineageChartInst.destroy(); lineageChartInst=null; }
+}
+
+function setStateFromDepth(name, depth){
+  const levels=["phylum","class","order","genus"];
+  // clear deeper levels
+  for(let i=depth;i<4;i++) state[levels[i]]="";
+  state[levels[depth]]=name;
+}
+function clearStateFromDepth(depth){
+  const levels=["phylum","class","order","genus"];
+  for(let i=depth;i<4;i++) state[levels[i]]="";
+}
+
+// ── Filters ──
+function populateFilters(){
+  const phylums=new Map(), classes=new Map(), genera=new Map();
+  PAPERS.forEach(p=>(p.topics||[]).forEach(t=>{
+    phylums.set(t.phylum,(phylums.get(t.phylum)||0)+1);
+    classes.set(t.class,(classes.get(t.class)||0)+1);
+    genera.set(t.genus,(genera.get(t.genus)||0)+1);
+  }));
+  const addOpts=(sel, map)=>{
+    [...map.entries()].sort((a,b)=>b[1]-a[1]).forEach(([label,cnt])=>{
+      const o=document.createElement("option");
+      o.value=label; o.textContent=`${label} (${cnt})`;
+      $(sel).appendChild(o);
+    });
+  };
+  addOpts("phylumFilter",phylums);
+  addOpts("classFilter", classes);
+  addOpts("genusFilter",  genera);
+}
+
+function hasTopic(p, field, val){
+  return (p.topics||[]).some(t=>t[field]===val);
+}
+
+function filtered(){
+  const qs=[$("q").value,$("q2").value,$("q3").value].map(x=>x.trim().toLowerCase()).filter(Boolean);
+  const mode=$("searchMode").value;
+  const type=$("typeFilter").value;
+  const phylum=$("phylumFilter").value || state.phylum;
+  const cls   =$("classFilter").value  || state.class;
+  const genus =$("genusFilter").value  || state.genus;
+  const sort  =$("sortFilter").value;
+
+  let rows=PAPERS.filter(p=>{
+    if(type && p.status!==type) return false;
+    if(phylum && !hasTopic(p,"phylum",phylum)) return false;
+    if(cls   && !hasTopic(p,"class", cls   )) return false;
+    if(genus && !hasTopic(p,"genus", genus )) return false;
+    if(qs.length){
+      const hay=(p.title+" "+(p.abstract||"")+" "+(p.keywords||[]).join(" ")).toLowerCase();
+      const ok=qs.map(q=>hay.includes(q));
+      if(mode==="and" && !ok.every(Boolean)) return false;
+      if(mode==="or"  && !ok.some(Boolean))  return false;
+    }
+    return true;
+  });
+
+  if(sort==="rating-desc") rows.sort((a,b)=>(b.rating_avg||0)-(a.rating_avg||0));
+  else if(sort==="title-asc") rows.sort((a,b)=>a.title.localeCompare(b.title));
+  return rows;
+}
+
+function mark(s){
+  const qs=[$("q").value,$("q2").value,$("q3").value].map(x=>x.trim()).filter(Boolean);
+  let out=escHtml(s);
+  for(const q of qs){
+    const re=new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")})`, "ig");
+    out=out.replace(re,"<mark>$1</mark>");
+  }
+  return out;
+}
+
+function setPhylumFilter(name){
+  const sel=$("phylumFilter"); sel.value=name; page=1; renderResults();
+  setTimeout(()=>$("search").scrollIntoView({behavior:"smooth",block:"start"}),50);
+}
+
+function renderResults(){
+  const rows=filtered();
+  const size=Number($("pageSizeFilter").value)||50;
+  const pages=Math.max(1,Math.ceil(rows.length/size));
+  page=Math.min(page,pages);
+  const slice=rows.slice((page-1)*size, page*size);
+
+  $("count").textContent=`${fmt(rows.length)} / ${fmt(PAPERS.length)} papers`;
+
+  // Active filter chips
+  const chips=[];
+  const pv=$("phylumFilter").value, cv=$("classFilter").value, gv=$("genusFilter").value;
+  const tv=$("typeFilter").value;
+  if(tv)     chips.push(`type: ${tv}`);
+  if(state.phylum&&!pv) chips.push(`phylum: ${state.phylum}`);
+  if(state.class &&!cv) chips.push(`class: ${state.class}`);
+  if(state.genus &&!gv) chips.push(`genus: ${state.genus}`);
+  if(pv) chips.push(`phylum: ${pv}`);
+  if(cv) chips.push(`class: ${cv}`);
+  if(gv) chips.push(`genus: ${gv}`);
+  $("activeFilters").innerHTML=chips.map(c=>`<span class="filter-chip">${escHtml(c)} ×</span>`).join("");
+
+  $("papers").innerHTML=slice.map(p=>{
+    const authors=(p.authors||[]);
+    const dispAuth=authors.length>3 ? authors.slice(0,3).join(", ")+" et al." : authors.join(", ");
+    const topicChips=(p.topics||[]).map(t=>
+      `<span class="topic-chip" data-phylum="${escHtml(t.phylum)}">${escHtml(t.genus)}</span>`
+    ).join("");
+    const badge=`<span class="badge ${p.status||""}">${p.status||""}</span>`;
+    const phTag=(p.topics||[])[0]?.phylum ?
+      `<span class="phylum-tag" data-phylum="${escHtml((p.topics||[])[0]?.phylum)}">${escHtml((p.topics||[])[0]?.phylum)}</span>` : "";
+    const link=p.openreview_url ?
+      `<a class="paper-link" href="${escHtml(p.openreview_url)}" target="_blank" rel="noopener noreferrer">OpenReview ↗</a>` : "";
+    return `<article class="paper">
+      <div class="meta">${badge}${phTag}<span style="font-size:11px;color:var(--muted)">★ ${(p.rating_avg||0).toFixed(2)}</span>${link}</div>
+      <div class="title">${mark(p.title||"")}</div>
+      <div class="authors">${escHtml(dispAuth)}</div>
+      <div class="topics">${topicChips}</div>
+      <div class="abstract">${mark((p.abstract||"").slice(0,600))}${p.abstract?.length>600?"…":""}</div>
+    </article>`;
+  }).join("");
+
+  // Click handlers for expandable abstract
+  $("papers").querySelectorAll(".title").forEach(el=>{
+    el.addEventListener("click",()=>el.closest(".paper").classList.toggle("open"));
+  });
+  // Topic chip → filter
+  $("papers").querySelectorAll(".phylum-tag,.topic-chip").forEach(el=>{
+    el.addEventListener("click",e=>{
+      e.stopPropagation();
+      setPhylumFilter(el.dataset.phylum||"");
+    });
+  });
+
+  // Pager
+  $("pager").innerHTML = rows.length>size ? `
+    <button class="btn-clear" id="prevPage" ${page<=1?"disabled":""}>← Prev</button>
+    <span>Page ${page} / ${pages} · ${fmt(rows.length)} results</span>
+    <button class="btn-clear" id="nextPage" ${page>=pages?"disabled":""}>Next →</button>
+  ` : `<span style="font-size:13px;color:var(--muted)">${fmt(rows.length)} results</span>`;
+  if($("prevPage")) $("prevPage").onclick=()=>{page--;renderResults();};
+  if($("nextPage")) $("nextPage").onclick=()=>{page++;renderResults();};
+}
+
+// ── Events ──
+function bindEvents(){
+  ["q","q2","q3"].forEach(id=>$(id).addEventListener("input",()=>{page=1;renderResults();}));
+  ["searchMode","typeFilter","phylumFilter","classFilter","genusFilter","sortFilter","pageSizeFilter"].forEach(id=>{
+    $(id).addEventListener("change",()=>{page=1;renderResults();});
+  });
+  $("clearFilters").addEventListener("click",()=>{
+    ["q","q2","q3"].forEach(id=>$(id).value="");
+    ["typeFilter","phylumFilter","classFilter","genusFilter","sortFilter"].forEach(id=>$(id).value="");
+    Object.keys(state).forEach(k=>state[k]="");
+    document.querySelectorAll(".tree-row.active").forEach(r=>r.classList.remove("active"));
+    clearLineageChart();
+    page=1; renderResults();
+  });
+  $("activeFilters").addEventListener("click",e=>{
+    if(e.target.classList.contains("filter-chip")){
+      const text=e.target.textContent.replace(" ×","");
+      const [kind,val]=text.split(": ");
+      if(kind==="type")   $("typeFilter").value="";
+      if(kind==="phylum") { $("phylumFilter").value=""; state.phylum=""; }
+      if(kind==="class")  { $("classFilter").value="";  state.class="";  }
+      if(kind==="genus")  { $("genusFilter").value="";  state.genus="";  }
+      page=1; renderResults();
+    }
+  });
+}
+</script>
+</body>
+</html>

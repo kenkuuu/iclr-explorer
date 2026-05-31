@@ -1,0 +1,511 @@
+{
+  "name": "ICLR 2026",
+  "children": [
+    {
+      "id": "P1", "name": "Large Language Models", "color": "#4FB6C6",
+      "children": [
+        {
+          "id": "C1.1", "name": "LM Pretraining & Architecture",
+          "children": [
+            {
+              "id": "O1.1.1", "name": "Architecture & Scaling",
+              "children": [{ "id": "G1.1.1", "name": "Pretraining / Scaling",
+                "domain": [],
+                "task": ["language model pretraining", "scaling law", "next token prediction", "autoregressive language", "pretraining objective", "emergent capabilities", "data curation language", "tokenizer", "tokenization"],
+                "method": ["mamba", "state space model", "ssm", "rwkv", "retnet", "transformer architecture", "positional encoding", "rope", "flash attention", "long context", "context length", "model merging", "continual pretraining", "foundation model", "base model", "llama", "mistral", "gemini", "gpt-4", "chinchilla"] }]
+            }
+          ]
+        },
+        {
+          "id": "C1.2", "name": "Alignment & Post-Training",
+          "children": [
+            {
+              "id": "O1.2.1", "name": "Preference Optimization",
+              "children": [{ "id": "G1.2.1", "name": "RLHF / DPO",
+                "domain": ["preference optimization", "reward model", "rlhf", "reinforcement learning from human feedback", "human preference", "dpo", "direct preference optimization", "preference learning", "ppo alignment", "grpo", "iterative dpo"],
+                "task": ["alignment", "value alignment", "constitutional ai", "helpfulness", "harmlessness", "human feedback"],
+                "method": ["reject sampling", "best-of-n", "self-play dpo", "reward modeling"] }]
+            },
+            {
+              "id": "O1.2.2", "name": "Instruction Tuning",
+              "children": [{ "id": "G1.2.2", "name": "SFT / Chat Models",
+                "domain": ["instruction tuning", "instruction following", "supervised fine-tuning", "sft", "chat model", "conversation model"],
+                "task": ["finetuning language model", "fine-tuning llm", "llm finetuning", "assistant", "helpful harmless"],
+                "method": ["synthetic data llm", "data augmentation instruction", "self-instruct", "alpaca"] }]
+            }
+          ]
+        },
+        {
+          "id": "C1.3", "name": "LLM Reasoning",
+          "children": [
+            {
+              "id": "O1.3.1", "name": "Mathematical & Code Reasoning",
+              "children": [{ "id": "G1.3.1", "name": "Math / Code",
+                "domain": ["mathematical reasoning", "math word problem", "code generation", "code reasoning", "coding", "gsm8k", "math benchmark", "program synthesis"],
+                "task": ["arithmetic", "algebra", "geometry reasoning", "logical reasoning", "theorem proving", "symbolic reasoning", "humaneval", "mbpp", "swe-bench", "commonsense reasoning"],
+                "method": ["chain-of-thought", "cot", "step-by-step", "tree of thought", "self-consistency", "few-shot prompting", "scratchpad"] }]
+            },
+            {
+              "id": "O1.3.2", "name": "Test-Time Compute",
+              "children": [{ "id": "G1.3.2", "name": "Process Reward / Inference Scaling",
+                "domain": ["test-time compute", "test-time scaling", "inference scaling", "process reward model", "prm"],
+                "task": ["reasoning llm", "slow thinking", "verification", "outcome reward model", "orm"],
+                "method": ["o1", "deepseek-r1", "test time", "best-of-n reasoning", "monte carlo reasoning"] }]
+            }
+          ]
+        },
+        {
+          "id": "C1.4", "name": "LLM Agents",
+          "children": [
+            {
+              "id": "O1.4.1", "name": "Tool & Retrieval",
+              "children": [{ "id": "G1.4.1", "name": "RAG / Tool Use",
+                "domain": ["retrieval augmented", "rag", "retrieval-augmented generation", "tool use", "tool-augmented", "function calling"],
+                "task": ["external knowledge", "knowledge retrieval", "open-domain qa", "api calling"],
+                "method": ["react framework", "reflexion", "calculator", "search engine integration"] }]
+            },
+            {
+              "id": "O1.4.2", "name": "Agentic Workflows",
+              "children": [{ "id": "G1.4.2", "name": "LLM Agents",
+                "domain": ["llm agent", "language model agent", "agentic", "autonomous agent", "multi-agent llm"],
+                "task": ["web agent", "gui agent", "computer use", "browser automation", "task decomposition", "orchestration"],
+                "method": ["webarena", "webshop", "agent benchmark", "scaffold", "agent communication"] }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P2", "name": "Multimodal & Vision-Language", "color": "#F0B429",
+      "children": [
+        {
+          "id": "C2.1", "name": "Vision-Language Models",
+          "children": [
+            {
+              "id": "O2.1.1", "name": "VLM Reasoning",
+              "children": [{ "id": "G2.1.1", "name": "VLM / MLLM",
+                "domain": ["vision language model", "vlm", "mllm", "multimodal large language model", "multimodal llm", "visual instruction tuning"],
+                "task": ["visual reasoning", "visual question answering", "vqa", "image understanding", "multimodal reasoning"],
+                "method": ["llava", "flamingo", "blip", "image encoder llm", "visual token", "vision backbone llm"] }]
+            },
+            {
+              "id": "O2.1.2", "name": "Visual Grounding",
+              "children": [{ "id": "G2.1.2", "name": "Grounding",
+                "domain": ["visual grounding", "referring expression", "grounded understanding", "spatial reasoning visual", "chart understanding", "document understanding"],
+                "task": ["image-text matching", "cross-modal retrieval", "clip", "contrastive image-text"],
+                "method": ["ocr", "layout understanding", "region-level"] }]
+            }
+          ]
+        },
+        {
+          "id": "C2.2", "name": "Audio-Visual & Video-Language",
+          "children": [
+            {
+              "id": "O2.2.1", "name": "Cross-Modal Learning",
+              "children": [{ "id": "G2.2.1", "name": "Video-Language",
+                "domain": ["video language model", "video-language", "video captioning", "video qa", "video mllm", "audio-visual", "speech-language"],
+                "task": ["temporal reasoning language", "video instruction", "video description"],
+                "method": ["video encoder", "temporal attention language"] }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P3", "name": "Generative Models", "color": "#E07B54",
+      "children": [
+        {
+          "id": "C3.1", "name": "Diffusion & Flow Models",
+          "children": [
+            {
+              "id": "O3.1.1", "name": "Image Generation",
+              "children": [{ "id": "G3.1.1", "name": "Text-to-Image",
+                "domain": ["text-to-image", "image generation", "image synthesis"],
+                "task": ["stable diffusion", "latent diffusion", "diffusion transformer", "dit", "denoising diffusion"],
+                "method": ["ddpm", "ddim", "score matching", "classifier-free guidance", "cfg", "unet diffusion"] }]
+            },
+            {
+              "id": "O3.1.2", "name": "Video Generation",
+              "children": [{ "id": "G3.1.2", "name": "Video Generation",
+                "domain": ["video generation", "text-to-video", "video synthesis", "video diffusion"],
+                "task": ["temporal consistency video", "motion generation video"],
+                "method": ["video diffusion model", "temporal attention generation"] }]
+            },
+            {
+              "id": "O3.1.3", "name": "Flow Matching",
+              "children": [{ "id": "G3.1.3", "name": "Flow-Based Models",
+                "domain": ["flow matching", "rectified flow", "normalizing flow"],
+                "task": ["continuous generative model", "probability flow"],
+                "method": ["consistency model", "ode generative", "sde generative", "energy-based model", "ebm"] }]
+            }
+          ]
+        },
+        {
+          "id": "C3.2", "name": "Image Editing & Other Generation",
+          "children": [
+            {
+              "id": "O3.2.1", "name": "Controllable Generation",
+              "children": [{ "id": "G3.2.1", "name": "Image Editing",
+                "domain": ["image editing", "image-to-image", "inpainting", "style transfer", "personalization"],
+                "task": ["dreambooth", "textual inversion", "controlnet", "instruction-based editing"],
+                "method": ["lora generation", "text-guided editing"] }]
+            },
+            {
+              "id": "O3.2.2", "name": "Discrete & Other Generation",
+              "children": [{ "id": "G3.2.2", "name": "Autoregressive / GAN",
+                "domain": ["autoregressive image", "vq-vae", "vqvae", "generative adversarial", "gan"],
+                "task": ["discrete image generation", "codebook generation"],
+                "method": ["variational autoencoder", "vae", "elbo", "vector quantization generation"] }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P4", "name": "Computer Vision", "color": "#3498DB",
+      "children": [
+        {
+          "id": "C4.1", "name": "Recognition & Detection",
+          "children": [
+            {
+              "id": "O4.1.1", "name": "Object Detection & Segmentation",
+              "children": [{ "id": "G4.1.1", "name": "Detection / Segmentation",
+                "domain": ["object detection", "instance segmentation", "semantic segmentation", "panoptic segmentation"],
+                "task": ["open-vocabulary detection", "zero-shot detection", "sam", "segment anything"],
+                "method": ["yolo", "detr", "detection transformer", "feature pyramid"] }]
+            },
+            {
+              "id": "O4.1.2", "name": "Image Recognition",
+              "children": [{ "id": "G4.1.2", "name": "Image Recognition",
+                "domain": ["image classification", "image recognition", "visual backbone"],
+                "task": ["fine-grained recognition", "few-shot classification", "zero-shot classification"],
+                "method": ["vision transformer", "vit", "swin transformer", "convnext"] }]
+            }
+          ]
+        },
+        {
+          "id": "C4.2", "name": "3D Vision",
+          "children": [
+            {
+              "id": "O4.2.1", "name": "Neural Rendering",
+              "children": [{ "id": "G4.2.1", "name": "3DGS / NeRF",
+                "domain": ["3d gaussian", "gaussian splatting", "nerf", "neural radiance field", "novel view synthesis"],
+                "task": ["3d reconstruction", "scene reconstruction", "view synthesis"],
+                "method": ["implicit neural", "occupancy network", "sdf"] }]
+            },
+            {
+              "id": "O4.2.2", "name": "3D Understanding",
+              "children": [{ "id": "G4.2.2", "name": "3D Perception",
+                "domain": ["point cloud", "depth estimation", "3d scene understanding", "lidar"],
+                "task": ["3d object detection", "stereo matching", "monocular depth"],
+                "method": ["pointnet", "voxel", "3d convolution"] }]
+            }
+          ]
+        },
+        {
+          "id": "C4.3", "name": "Video Understanding",
+          "children": [
+            {
+              "id": "O4.3.1", "name": "Temporal Modeling",
+              "children": [{ "id": "G4.3.1", "name": "Video Analysis",
+                "domain": ["video understanding", "action recognition", "temporal modeling", "video object segmentation"],
+                "task": ["optical flow", "tracking", "activity recognition", "video classification"],
+                "method": ["video transformer", "temporal attention", "3d convolution video"] }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P5", "name": "Reinforcement Learning", "color": "#7B5EA7",
+      "children": [
+        {
+          "id": "C5.1", "name": "RL Algorithms",
+          "children": [
+            {
+              "id": "O5.1.1", "name": "Policy Optimization",
+              "children": [{ "id": "G5.1.1", "name": "Policy Gradient",
+                "domain": ["reinforcement learning", "policy gradient", "policy optimization", "on-policy"],
+                "task": ["actor-critic", "soft actor-critic", "sac rl", "proximal policy optimization", "ppo rl", "a3c", "advantage function"],
+                "method": ["trust region", "natural policy gradient"] }]
+            },
+            {
+              "id": "O5.1.2", "name": "Offline & Value-Based RL",
+              "children": [{ "id": "G5.1.2", "name": "Offline RL",
+                "domain": ["offline reinforcement learning", "offline rl", "batch rl", "off-policy rl"],
+                "task": ["q-learning", "deep q-network", "dqn", "value function", "temporal difference"],
+                "method": ["conservative rl", "cql", "iql", "imitation learning rl", "behavioral cloning"] }]
+            }
+          ]
+        },
+        {
+          "id": "C5.2", "name": "Model-Based RL & Planning",
+          "children": [
+            {
+              "id": "O5.2.1", "name": "World Models",
+              "children": [{ "id": "G5.2.1", "name": "World Models",
+                "domain": ["world model", "model-based reinforcement learning", "model-based rl", "mbrl"],
+                "task": ["environment model", "latent world model", "imagination"],
+                "method": ["dreamer", "muzero", "dyna"] }]
+            },
+            {
+              "id": "O5.2.2", "name": "Planning & MCTS",
+              "children": [{ "id": "G5.2.2", "name": "Planning / MCTS",
+                "domain": ["planning rl", "mcts", "monte carlo tree search", "search rl"],
+                "task": ["model predictive control", "mpc", "hierarchical rl", "options framework"],
+                "method": ["lookahead", "tree search rl", "alpha zero"] }]
+            }
+          ]
+        },
+        {
+          "id": "C5.3", "name": "Multi-Agent RL",
+          "children": [
+            {
+              "id": "O5.3.1", "name": "Multi-Agent Systems",
+              "children": [{ "id": "G5.3.1", "name": "MARL",
+                "domain": ["multi-agent reinforcement learning", "marl", "cooperative multi-agent", "competitive multi-agent"],
+                "task": ["multi-agent game", "self-play rl", "nash equilibrium"],
+                "method": ["mean field", "communication marl", "decentralized execution", "exploration bandit", "bandit"] }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P6", "name": "Embodied AI & Robotics", "color": "#E67E22",
+      "children": [
+        {
+          "id": "C6.1", "name": "Robotic Learning",
+          "children": [
+            {
+              "id": "O6.1.1", "name": "Manipulation & Control",
+              "children": [{ "id": "G6.1.1", "name": "Manipulation",
+                "domain": ["robot manipulation", "grasping", "dexterous", "robotic arm", "humanoid robot", "locomotion", "quadruped"],
+                "task": ["sim-to-real", "contact", "tactile", "manipulation policy"],
+                "method": ["motion planning robot", "robot learning", "behavior cloning robot"] }]
+            }
+          ]
+        },
+        {
+          "id": "C6.2", "name": "Autonomous Systems",
+          "children": [
+            {
+              "id": "O6.2.1", "name": "Autonomous Driving & Navigation",
+              "children": [{ "id": "G6.2.1", "name": "Autonomous Driving",
+                "domain": ["autonomous driving", "self-driving", "driving policy", "end-to-end driving"],
+                "task": ["navigation robot", "embodied navigation", "visual navigation", "drone", "uav", "trajectory prediction driving"],
+                "method": ["nuplan", "carla", "waymo", "embodied question"] }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P7", "name": "ML Theory & Efficient ML", "color": "#6B7280",
+      "children": [
+        {
+          "id": "C7.1", "name": "Optimization Theory",
+          "children": [
+            {
+              "id": "O7.1.1", "name": "First-Order Optimization",
+              "children": [{ "id": "G7.1.1", "name": "SGD / Adam Variants",
+                "domain": ["stochastic gradient descent", "sgd", "adam optimizer", "learning rate schedule", "warmup"],
+                "task": ["gradient clipping", "weight decay", "momentum", "cosine annealing", "gradient noise"],
+                "method": ["adamw", "adagrad", "rmsprop", "lion optimizer"] }]
+            },
+            {
+              "id": "O7.1.2", "name": "Generalization Theory",
+              "children": [{ "id": "G7.1.2", "name": "Generalization Bounds",
+                "domain": ["generalization bound", "pac learning", "rademacher complexity", "sample complexity"],
+                "task": ["implicit bias", "double descent", "neural tangent kernel", "ntk", "loss landscape", "sharpness", "flat minima"],
+                "method": ["edge of stability", "catapult", "infinite width"] }]
+            }
+          ]
+        },
+        {
+          "id": "C7.2", "name": "Efficient ML",
+          "children": [
+            {
+              "id": "O7.2.1", "name": "Quantization & Pruning",
+              "children": [{ "id": "G7.2.1", "name": "Quantization / Pruning",
+                "domain": ["quantization", "model quantization", "pruning", "model pruning", "knowledge distillation"],
+                "task": ["model compression", "neural architecture search", "nas"],
+                "method": ["int8", "int4", "fp4", "bfloat16", "structured pruning", "sparsity", "post-training quantization"] }]
+            },
+            {
+              "id": "O7.2.2", "name": "Parameter-Efficient Fine-Tuning",
+              "children": [{ "id": "G7.2.2", "name": "LoRA / PEFT",
+                "domain": ["lora", "low-rank adaptation", "peft", "parameter-efficient", "adapter tuning"],
+                "task": ["prefix tuning", "prompt tuning", "delta tuning"],
+                "method": ["ia3", "soft prompt", "full fine-tuning vs peft"] }]
+            },
+            {
+              "id": "O7.2.3", "name": "Inference Efficiency",
+              "children": [{ "id": "G7.2.3", "name": "Speculative / MoE",
+                "domain": ["speculative decoding", "mixture of experts", "moe", "sparse activation"],
+                "task": ["kv cache", "early exit", "token pruning", "continuous batching", "inference acceleration"],
+                "method": ["dynamic network", "adaptive computation", "conditional computation"] }]
+            }
+          ]
+        },
+        {
+          "id": "C7.3", "name": "Representation Learning",
+          "children": [
+            {
+              "id": "O7.3.1", "name": "Self-Supervised Learning",
+              "children": [{ "id": "G7.3.1", "name": "Contrastive / MAE",
+                "domain": ["self-supervised learning", "contrastive learning", "masked autoencoder", "mae"],
+                "task": ["simclr", "moco", "byol", "dino", "barlow twins", "masked image modeling", "ssl pretraining"],
+                "method": ["triplet loss", "siamese", "jepa", "vicreg", "joint embedding"] }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P8", "name": "Safety, Robustness & Privacy", "color": "#E74C3C",
+      "children": [
+        {
+          "id": "C8.1", "name": "AI Safety & Interpretability",
+          "children": [
+            {
+              "id": "O8.1.1", "name": "Mechanistic Interpretability",
+              "children": [{ "id": "G8.1.1", "name": "Mechanistic Interpretability",
+                "domain": ["mechanistic interpretability", "circuit", "sparse autoencoder", "superposition"],
+                "task": ["feature attribution", "probing", "attention head analysis", "neuron activation", "causal tracing"],
+                "method": ["causal intervention", "activation patching", "logit lens"] }]
+            },
+            {
+              "id": "O8.1.2", "name": "Hallucination & Factuality",
+              "children": [{ "id": "G8.1.2", "name": "Hallucination",
+                "domain": ["hallucination", "factuality", "faithfulness", "groundedness", "truthfulness"],
+                "task": ["sycophancy", "factual accuracy", "knowledge boundary"],
+                "method": ["confabulation", "calibration factual", "retrieval factual"] }]
+            },
+            {
+              "id": "O8.1.3", "name": "Bias & Fairness",
+              "children": [{ "id": "G8.1.3", "name": "Fairness",
+                "domain": ["bias", "fairness", "demographic parity", "equalized odds", "social bias"],
+                "task": ["toxicity", "harmful content", "debiasing", "representation bias"],
+                "method": ["stereotypes", "counterfactual fairness"] }]
+            },
+            {
+              "id": "O8.1.4", "name": "Adversarial Safety",
+              "children": [{ "id": "G8.1.4", "name": "Red Teaming",
+                "domain": ["red teaming", "jailbreak", "adversarial prompt", "prompt injection"],
+                "task": ["harmful generation", "safety evaluation", "refusal", "ai risk"],
+                "method": ["safety benchmark", "safety filter"] }]
+            }
+          ]
+        },
+        {
+          "id": "C8.2", "name": "Robustness",
+          "children": [
+            {
+              "id": "O8.2.1", "name": "Adversarial Robustness",
+              "children": [{ "id": "G8.2.1", "name": "Adversarial Examples",
+                "domain": ["adversarial example", "adversarial attack", "adversarial robustness", "adversarial training"],
+                "task": ["pgd", "fgsm", "certified robustness", "l-inf perturbation"],
+                "method": ["smoothing", "adversarial purification"] }]
+            },
+            {
+              "id": "O8.2.2", "name": "OOD & Distribution Shift",
+              "children": [{ "id": "G8.2.2", "name": "OOD / Domain Shift",
+                "domain": ["out-of-distribution", "ood", "distribution shift", "domain generalization"],
+                "task": ["covariate shift", "spurious correlation", "shortcut learning", "subpopulation shift"],
+                "method": ["invariant learning", "irm", "group robustness"] }]
+            },
+            {
+              "id": "O8.2.3", "name": "Uncertainty Estimation",
+              "children": [{ "id": "G8.2.3", "name": "Uncertainty Estimation",
+                "domain": ["uncertainty quantification", "calibration", "conformal prediction"],
+                "task": ["epistemic uncertainty", "aleatoric uncertainty", "bayesian neural network"],
+                "method": ["monte carlo dropout", "ensemble uncertainty", "coverage guarantee"] }]
+            }
+          ]
+        },
+        {
+          "id": "C8.3", "name": "Privacy",
+          "children": [
+            {
+              "id": "O8.3.1", "name": "Federated Learning",
+              "children": [{ "id": "G8.3.1", "name": "Federated Learning",
+                "domain": ["federated learning", "federated", "fedavg", "non-iid", "data heterogeneity federated"],
+                "task": ["personalized federated", "byzantine robust", "split learning"],
+                "method": ["communication efficiency federated", "asynchronous federated"] }]
+            },
+            {
+              "id": "O8.3.2", "name": "Privacy & Unlearning",
+              "children": [{ "id": "G8.3.2", "name": "DP / Unlearning",
+                "domain": ["differential privacy", "dp-sgd", "privacy-preserving", "machine unlearning", "unlearning"],
+                "task": ["membership inference", "gradient leakage", "model inversion", "right to be forgotten"],
+                "method": ["secure aggregation", "homomorphic encryption", "certified unlearning"] }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P9", "name": "Scientific & Domain Applications", "color": "#34A853",
+      "children": [
+        {
+          "id": "C9.1", "name": "Scientific ML",
+          "children": [
+            {
+              "id": "O9.1.1", "name": "Molecular & Drug Discovery",
+              "children": [{ "id": "G9.1.1", "name": "Drug / Protein",
+                "domain": ["protein", "drug discovery", "drug design", "molecular docking", "alphafold", "protein folding", "de novo design", "molecular generation", "molecule property"],
+                "task": ["drug-target interaction", "binding affinity", "protein structure prediction"],
+                "method": ["equivariant network", "se3", "molecular dynamics", "force field"] }]
+            },
+            {
+              "id": "O9.1.2", "name": "Physics & Climate",
+              "children": [{ "id": "G9.1.2", "name": "Neural PDE / Physics",
+                "domain": ["partial differential equation", "pde", "neural pde", "physics-informed", "fluid dynamics", "climate", "weather prediction"],
+                "task": ["operator learning", "scientific simulation", "numerical method"],
+                "method": ["fourier neural operator", "physics-informed neural network", "pinn"] }]
+            },
+            {
+              "id": "O9.1.3", "name": "Medical & Biomedical",
+              "children": [{ "id": "G9.1.3", "name": "Medical Imaging",
+                "domain": ["medical imaging", "pathology", "clinical", "healthcare", "radiology", "medical image", "biomedical", "genomics", "bioinformatics", "brain", "eeg", "fmri"],
+                "task": ["disease detection", "medical diagnosis", "clinical prediction"],
+                "method": ["u-net medical", "medical segmentation"] }]
+            }
+          ]
+        },
+        {
+          "id": "C9.2", "name": "Graph Learning",
+          "children": [
+            {
+              "id": "O9.2.1", "name": "Graph Neural Networks",
+              "children": [{ "id": "G9.2.1", "name": "GNN",
+                "domain": ["graph neural network", "gnn", "message passing", "graph convolutional", "gcn", "graph attention", "gat", "graph isomorphism"],
+                "task": ["node classification", "link prediction graph", "graph classification"],
+                "method": ["graph transformer", "graph self-supervised", "graph generation"] }]
+            },
+            {
+              "id": "O9.2.2", "name": "Knowledge Graphs",
+              "children": [{ "id": "G9.2.2", "name": "Knowledge Graph",
+                "domain": ["knowledge graph", "knowledge base", "entity embedding", "relation extraction", "knowledge graph embedding"],
+                "task": ["link prediction knowledge", "heterogeneous graph"],
+                "method": ["graph rag", "kg reasoning"] }]
+            }
+          ]
+        },
+        {
+          "id": "C9.3", "name": "Time Series",
+          "children": [
+            {
+              "id": "O9.3.1", "name": "Forecasting & Sequential",
+              "children": [{ "id": "G9.3.1", "name": "Time Series",
+                "domain": ["time series forecasting", "time series", "forecasting", "temporal forecasting", "multivariate time series"],
+                "task": ["anomaly detection time series", "sequential data", "event prediction"],
+                "method": ["causal inference", "causal discovery", "causal model", "optimal transport"] }]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

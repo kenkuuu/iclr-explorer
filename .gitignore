@@ -1,0 +1,23 @@
+# 環境・秘密情報
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+dist/
+
+# uv
+.python-version
+
+# 生成データ（大容量）
+data/papers_raw.json
+data/papers_classified.json
+data/.classify_checkpoint.json
+
+# テスト・カバレッジ
+.pytest_cache/
+.coverage
+htmlcov/

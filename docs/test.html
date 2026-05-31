@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
+  <script src="https://unpkg.com/recharts@2/umd/Recharts.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.28.4/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { BarChart, Bar, XAxis, YAxis, Tooltip } = Recharts;
+    function App() {
+      const data = [{name:"A", v:10},{name:"B", v:20}];
+      return (
+        <div>
+          <h1>Test OK</h1>
+          <BarChart width={400} height={200} data={data}>
+            <XAxis dataKey="name"/><YAxis/>
+            <Bar dataKey="v" fill="#4FB6C6"/>
+          </BarChart>
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>
