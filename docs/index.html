@@ -152,6 +152,7 @@ mark{background:#fff3a8;border-radius:2px}
     <nav>
       <div class="section-label">Overview</div>
       <a href="#overview">Statistics</a>
+      <a href="#ratings">Ratings</a>
       <a href="#dist">Topic Distribution</a>
       <div class="section-label">Taxonomy</div>
       <a href="#phylogeny">Phylogeny Tree</a>
@@ -167,6 +168,20 @@ mark{background:#fff3a8;border-radius:2px}
       <h2>ICLR 2026</h2>
       <p class="lead">Accepted papers · Topic Phylogeny · Data from <a href="https://openreview.net" target="_blank">OpenReview</a> (CC0)</p>
       <div class="kpis" id="kpis"></div>
+    </section>
+
+    <!-- ── Rating Distribution ── -->
+    <section id="ratings" style="margin-bottom:48px">
+      <div class="two-col">
+        <div class="chart-box" style="height:220px">
+          <div class="chart-title">Rating Distribution (bin 0.5)</div>
+          <canvas id="ratingChart"></canvas>
+        </div>
+        <div class="chart-box" style="height:220px">
+          <div class="chart-title">Oral vs Poster</div>
+          <canvas id="typeChart"></canvas>
+        </div>
+      </div>
     </section>
 
     <!-- ── Topic Distribution ── -->
@@ -292,6 +307,7 @@ function init(){
   buildKpis();
   buildPhylumChart();
   buildClassChart();
+  buildRatingHistogram();
   buildTree();
   populateFilters();
   bindEvents();
@@ -323,6 +339,35 @@ function buildKpis(){
     `<span class="stat-pill">${accRate}% rate</span>`,
     `<span class="stat-pill">${fmt(oral)} oral</span>`,
   ].join("");
+}
+
+// ── Rating Histogram ──
+function buildRatingHistogram(){
+  const rated = PAPERS.filter(p=>p.rating_avg>0);
+  const bins=[];
+  for(let lo=3.5;lo<10;lo+=0.5){
+    bins.push({lo,count:rated.filter(p=>p.rating_avg>=lo&&p.rating_avg<lo+0.5).length});
+  }
+  new Chart($("ratingChart"),{
+    type:"bar",
+    data:{
+      labels:bins.map(b=>b.lo.toFixed(1)),
+      datasets:[{data:bins.map(b=>b.count),backgroundColor:"#4FB6C6",borderRadius:3}]
+    },
+    options:{maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:ctx=>`${fmt(ctx.raw)} papers`}}},
+      scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10}},grid:{display:false}}}}
+  });
+  // Oral vs Poster doughnut
+  const oral=PAPERS.filter(p=>p.status==="Oral").length;
+  const poster=PAPERS.length-oral;
+  new Chart($("typeChart"),{
+    type:"doughnut",
+    data:{labels:[`Oral (${fmt(oral)})`,`Poster (${fmt(poster)})`],
+          datasets:[{data:[oral,poster],backgroundColor:["#6e3ad6","#e5e5ea"],borderWidth:0}]},
+    options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{font:{size:11},padding:8}},
+      tooltip:{callbacks:{label:ctx=>`${fmt(ctx.raw)} (${(ctx.raw/PAPERS.length*100).toFixed(1)}%)`}}}}
+  });
 }
 
 // ── Phylum Chart ──
