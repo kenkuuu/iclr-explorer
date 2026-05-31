@@ -47,11 +47,16 @@ p.lead{font-size:15px;color:var(--muted);margin-bottom:20px}
 
 /* ── KPI cards ── */
 .kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:16px}
-.kpi{background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;padding:14px 12px;min-width:0}
+.kpi{background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;
+     padding:14px 10px;min-width:0;overflow:hidden}
 .kpi.total{border-color:rgba(0,102,204,.22);background:linear-gradient(180deg,#fff,#f8fbff)}
-.kpi .v{font-size:clamp(18px,2.2vw,26px);font-weight:700;letter-spacing:-.02em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kpi .l{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kpi .sub{font-size:10px;color:var(--muted-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .v{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.1;
+         white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+         font-variant-numeric:tabular-nums}
+.kpi .l{font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
+         margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .sub{font-size:10px;color:var(--muted-2);margin-top:2px;
+           white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ── Two-col ── */
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -401,6 +406,53 @@ function buildKpis(){
 // ════════════════════════════════════════════════
 // Word Cloud
 // ════════════════════════════════════════════════
+// ── Pre-computed phrase frequencies (Python-generated, curated) ──
+const WC_PHRASES = [
+  ["large language models",3543],["reinforcement learning",3350],["diffusion models",1276],
+  ["reasoning",4929],["language models",4762],["diffusion",3717],["multimodal",2226],
+  ["alignment",1458],["agents",1371],["fine-tuning",1026],["representation learning",716],
+  ["transformer",698],["interpretability",649],["vision-language models",613],
+  ["quantization",568],["generative models",550],["video generation",541],
+  ["flow matching",526],["foundation models",503],["policy optimization",401],
+  ["pretraining",398],["image generation",373],["gaussian splatting",342],
+  ["llm reasoning",337],["graph neural networks",221],["continual learning",302],
+  ["embodied",293],["federated learning",283],["in-context learning",275],
+  ["text-to-image",274],["reasoning models",274],["question answering",257],
+  ["hallucination",254],["preference optimization",247],["calibration",246],
+  ["llm agents",234],["time series forecasting",229],["anomaly detection",225],
+  ["optimal transport",221],["video understanding",220],["discrete diffusion",220],
+  ["image editing",212],["test-time scaling",208],["rlvr",208],["lora",202],
+  ["autonomous driving",202],["code generation",196],["spiking neural networks",112],
+  ["imitation learning",195],["video diffusion",192],["rag",187],
+  ["knowledge distillation",187],["spatial reasoning",180],["synthetic data",177],
+  ["scaling laws",177],["uncertainty quantification",176],["object detection",173],
+  ["world models",173],["safety alignment",173],["self-supervised learning",172],
+  ["moe",165],["contrastive learning",163],["offline reinforcement learning",123],
+  ["multimodal learning",162],["verifiable rewards",151],["test-time adaptation",149],
+  ["supervised fine-tuning",148],["retrieval-augmented generation",146],
+  ["out-of-distribution",140],["rlhf",118],["multi-agent reinforcement learning",78],
+  ["deep reinforcement learning",75],["novel view synthesis",102],["reward modeling",101],
+  ["domain adaptation",97],["tool use",94],["direct preference optimization",79],
+  ["visual question answering",79],["dpo",69],["sft",164],["program synthesis",41],
+  ["distribution shift",37],["autonomous agents",27],["gradient descent",198],
+];
+
+const WC_COLORS_MAP = {
+  "large language models":"#4FB6C6","language models":"#38bdf8","reasoning":"#7dd3fc",
+  "reinforcement learning":"#8b5cf6","policy optimization":"#a78bfa","embodied":"#c4b5fd",
+  "diffusion models":"#fb923c","diffusion":"#f87171","flow matching":"#fcd34d",
+  "video generation":"#f59e0b","image generation":"#fb923c","gaussian splatting":"#fbbf24",
+  "alignment":"#34d399","safety alignment":"#10b981","hallucination":"#6ee7b7","rlhf":"#34d399",
+  "agents":"#60a5fa","llm agents":"#2563eb","retrieval-augmented generation":"#93c5fd",
+  "vision-language models":"#F0B429","multimodal":"#e879f9","multimodal learning":"#d946ef",
+  "generative models":"#E07B54","discrete diffusion":"#fb923c",
+  "federated learning":"#4CAF82","federated learning":"#4ade80",
+  "quantization":"#6B7280","spiking neural networks":"#86efac",
+  "graph neural networks":"#5B8DD9","lora":"#6B7280","moe":"#475569",
+};
+const WC_PALETTE=["#4FB6C6","#38bdf8","#a78bfa","#34d399","#f59e0b","#f87171","#e879f9","#60a5fa","#4ade80","#fbbf24","#8b5cf6","#10b981","#fb923c","#2563eb","#6ee7b7"];
+
+// Keep WC_STOP minimal (only for fallback, not used for main word cloud)
 const WC_STOP = new Set(`
 a an the and or but in on at to for of with by from as is was are were be been being
 have has had do does did will would shall should may might must can could not that this
@@ -456,80 +508,71 @@ const WC_COLORS = [
 ];
 
 function buildWordCloud(){
-  if(!window.WordCloud){ setTimeout(()=>{ try{buildWordCloud();}catch(e){} },600); return; }
+  if(!window.WordCloud){ setTimeout(()=>{ try{buildWordCloud();}catch(e){console.warn(e);} },600); return; }
   const canvas=$("wordcloudCanvas");
   if(!canvas||!canvas.getContext) return;
 
-  // ── 星屑を先にCanvasに描画（ワードクラウドのbackgroundとして） ──
-  const W=canvas.offsetWidth||800;
-  canvas.width=W; canvas.height=380;
-  const bgCtx=canvas.getContext("2d");
-  bgCtx.fillStyle="#0f172a";
-  bgCtx.fillRect(0,0,W,380);
-  // stars
-  for(let i=0;i<80;i++){
-    const x=Math.random()*W, y=Math.random()*380, r=Math.random()*1.3+0.2;
-    bgCtx.globalAlpha=Math.random()*0.5+0.1;
-    bgCtx.fillStyle="#fff";
-    bgCtx.beginPath(); bgCtx.arc(x,y,r,0,Math.PI*2); bgCtx.fill();
+  const W = canvas.parentElement ? canvas.parentElement.clientWidth - 64 : 760;
+  const H = 380;
+  canvas.width  = Math.max(W, 400);
+  canvas.height = H;
+
+  // ── 背景：深い宇宙色 + 星屑 ──
+  const ctx = canvas.getContext("2d");
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0,   "#0c1a2e");
+  grad.addColorStop(0.5, "#0f2340");
+  grad.addColorStop(1,   "#0a1628");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+  for(let i = 0; i < 100; i++){
+    ctx.globalAlpha = Math.random() * 0.45 + 0.05;
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(Math.random()*W, Math.random()*H, Math.random()*1.2+0.1, 0, Math.PI*2);
+    ctx.fill();
   }
-  bgCtx.globalAlpha=1;
+  ctx.globalAlpha = 1;
 
-  // ── 単語頻度計算 ──
-  const freq={};
-  const titleBoost = 3;
-  PAPERS.forEach(p=>{
-    const titleWords = (p.title||"").toLowerCase().match(/[a-z][a-z'-]{2,25}/g)||[];
-    const abstrWords = (p.abstract||"").toLowerCase().match(/[a-z][a-z'-]{2,25}/g)||[];
-    const kwWords    = (p.keywords||[]).map(k=>k.toLowerCase()).join(" ").match(/[a-z][a-z'-]{2,25}/g)||[];
-    [...titleWords.map(w=>({w,n:titleBoost})), ...abstrWords.map(w=>({w,n:1})), ...kwWords.map(w=>({w,n:2}))].forEach(({w,n})=>{
-      const clean=w.replace(/^['-]+|['-]+$/g,"");
-      if(clean.length<4||WC_STOP.has(clean)) return;
-      freq[clean]=(freq[clean]||0)+n;
-    });
-  });
+  // ── スケーリング：対数スケール ──
+  const maxF = WC_PHRASES[0][1], minF = WC_PHRASES[WC_PHRASES.length-1][1];
+  const scaleSize = c => {
+    const t = (Math.log(c) - Math.log(minF)) / (Math.log(maxF) - Math.log(minF));
+    return Math.round(13 + t * 72);
+  };
 
-  // ── Top 200 words ──
-  const words=Object.entries(freq)
-    .filter(([w,c])=>c>=30)
-    .sort((a,b)=>b[1]-a[1])
-    .slice(0,200);
+  // カラー割り当て（フレーズ別固定色）
+  const colorCache = {};
+  const getColor = word => {
+    if(!colorCache[word]){
+      colorCache[word] = WC_COLORS_MAP[word] || WC_PALETTE[Object.keys(colorCache).length % WC_PALETTE.length];
+    }
+    return colorCache[word];
+  };
 
-  const maxF=words[0]?.[1]||1, minF=words[words.length-1]?.[1]||1;
-  const scaleSize=c=>Math.round(14+((Math.log(c)-Math.log(minF))/(Math.log(maxF)-Math.log(minF)))*80);
+  const list = WC_PHRASES.map(([w, c]) => [w, scaleSize(c)]);
 
-  const list=words.map(([w,c])=>[w,scaleSize(c)]);
-
-  const colorIdx={};
-  WordCloud(canvas,{
+  WordCloud(canvas, {
     list,
-    fontFamily:"-apple-system,BlinkMacSystemFont,'SF Pro Display',system-ui,sans-serif",
-    fontWeight:"700",
-    color:(word)=>{
-      if(!colorIdx[word]) colorIdx[word]=WC_COLORS[Math.floor(Math.random()*WC_COLORS.length)];
-      return colorIdx[word];
-    },
-    backgroundColor:"transparent",
-    rotateRatio:0.25,
-    rotationSteps:3,
-    minSize:10,
-    gridSize:Math.round(W/80),
-    weightFactor:1,
-    drawOutOfBound:false,
-    shrinkToFit:true,
-    shuffle:false,
-    hover:function(item,dimension,event){
-      canvas.style.cursor=item?"pointer":"default";
-    },
-    click:function(item){
-      if(item){
-        $("q").value=item[0];
-        page=1; renderResults();
-        $("search").scrollIntoView({behavior:"smooth",block:"start"});
-      }
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif",
+    fontWeight: "700",
+    color: (word) => getColor(word),
+    backgroundColor: "transparent",
+    rotateRatio:  0.2,
+    rotationSteps: 2,
+    minSize: 10,
+    gridSize: Math.round(W / 70),
+    drawOutOfBound: false,
+    shrinkToFit: true,
+    shuffle: false,
+    hover: (item) => { canvas.style.cursor = item ? "pointer" : "default"; },
+    click: (item) => {
+      if(!item) return;
+      $("q").value = item[0];
+      page = 1; renderResults();
+      $("search").scrollIntoView({behavior:"smooth", block:"start"});
     },
   });
-
 }
 
 // ════════════════════════════════════════════════
@@ -595,11 +638,14 @@ function hBarOpts(tooltip, onClick){
   return {
     indexAxis:"y", maintainAspectRatio:false,
     onClick,
-    layout:{padding:{right:8}},
+    layout:{padding:{right:40}},
     plugins:{legend:{display:false}, tooltip:{callbacks:{label:tooltip}}},
     scales:{
-      x:{ticks:{font:{size:10},maxTicksLimit:5}, grid:{color:"rgba(0,0,0,0.04)"}},
-      y:{ticks:{font:{size:11},mirror:false}, grid:{display:false}}
+      x:{ticks:{font:{size:10},maxTicksLimit:4},
+         grid:{color:"rgba(0,0,0,0.04)"},border:{display:false}},
+      y:{ticks:{font:{size:10.5},mirror:false},
+         grid:{display:false},border:{display:false},
+         afterFit(axis){ axis.width=Math.min(axis.width, 170); }}
     }
   };
 }
