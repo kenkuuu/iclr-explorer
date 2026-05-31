@@ -46,18 +46,19 @@ h3{font-size:16px;font-weight:600;margin-bottom:12px}
 p.lead{font-size:15px;color:var(--muted);margin-bottom:20px}
 
 /* ── KPI cards ── */
-.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px}
-.kpi{background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;padding:18px}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;padding:14px 12px;min-width:0}
 .kpi.total{border-color:rgba(0,102,204,.22);background:linear-gradient(180deg,#fff,#f8fbff)}
-.kpi .v{font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
-.kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-top:4px}
-.kpi .sub{font-size:11px;color:var(--muted-2);margin-top:2px}
+.kpi .v{font-size:clamp(18px,2.2vw,26px);font-weight:700;letter-spacing:-.02em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .l{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .sub{font-size:10px;color:var(--muted-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ── Two-col ── */
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.chart-box{background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;padding:18px}
-.chart-box.tall{height:440px}
-.chart-box canvas{width:100%!important}
+.chart-box{background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;padding:16px;min-width:0;overflow:hidden}
+.chart-box.tall{height:420px}
+.chart-box canvas{max-width:100%!important}
+.chart-box .chart-inner{position:relative;height:calc(100% - 28px)}
 .chart-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:12px}
 
 /* ── Tree panel ── */
@@ -400,34 +401,48 @@ function buildKpis(){
 // ════════════════════════════════════════════════
 // Word Cloud
 // ════════════════════════════════════════════════
-const WC_STOP = new Set(`a an the and or but in on at to for of with by from as is was are were
-be been being have has had do does did will would shall should may might must can could not that
-this these those which who what when where how we our their its it they us you your he she her
-his them some such also both each more most other than then there no only same so up if use used
-using show shows shown propose proposed demonstrate presents achieve achieves achieved model models
-method methods approach approaches paper result results performance improve improves improved task
-tasks train trained training learn learned learning data dataset set new novel problem problems
-existing previous work works however although while since based via well further without within
-two three multiple high low large small different various key main general specific standard
-current state recent thus hence moreover therefore furthermore additionally given often called
-through between across into over under about upon whether among etc first second third finally
-significantly substantially considerably notably outperform outperforms outperforming achieving
-state-of-the-art across extensive experiments experimental demonstrate demonstrates demonstrated
-showing shown effectively efficiently robustly flexibly scalably various settings challenging
-benchmark benchmarks baseline baselines compared comparison against demonstrate that shows
-results show results demonstrate obtain obtaining outperforming surpassing improving largely
-greatly widely commonly applied effective efficient robust flexible scalable address addresses
-remain remains relies rely typical typically often generally broadly simply easily directly
-address remain critical fundamental significant important major key novel propose ability enable
-allows allow make makes provide provides improve enhancing enhance build builds specifically
-ability enable allows allow makes provide provides improves enhancing enhance builds include
-includes including consider considers considering apply applies applying propose make enable
-both show high low such large small rather quite very still could would should may must our
-has have had does did will can cannot cannot while when where whether only just even though
-through which this these those with been being after before during since until unless because
-although however therefore thus hence moreover furthermore additionally also too yet already
-still nearly almost always never often sometimes generally typically usually normally usually
-lack lacks lacked lacks suffer suffers suffered suffer lacking`.split(/\s+/));
+const WC_STOP = new Set(`
+a an the and or but in on at to for of with by from as is was are were be been being
+have has had do does did will would shall should may might must can could not that this
+these those which who what when where how we our their its it they us you your he she
+her his them some such both each other than then there no only same so up if
+a an the i e etc via
+model models method methods approach approaches technique techniques framework frameworks
+system systems architecture architectures network networks neural deep layer layers
+paper papers work works study studies research researchers task tasks problem problems
+setting settings condition conditions domain domains space latent
+data dataset datasets sample samples experiment experiments experimental
+train trained training learn learned learning optimize optimization optimizing
+result results performance performances evaluation evaluate evaluating
+improve improves improved improvement improving enhance enhances enhanced enhancing
+achieve achieves achieved achieving obtain obtains obtaining demonstrate demonstrates
+demonstrated demonstrating show shows shown showing present presents presented presenting
+propose propose proposed proposing introduce introduces introduced introducing develop
+develops developed developing design designs designed designing provide provides provided
+build builds built building apply applies applied applying use using used utilize utilizing
+enable enables enabling allow allows allowing address addresses addressing consider considers
+considering explore explores exploring analyze analyzes analyzing study studying investigate
+feature features representation representations embedding embeddings parameter parameters
+weight weights gradient gradients loss losses accuracy metric metrics score scores
+input inputs output outputs process processing mechanism mechanisms module modules
+operation operations function functions layer layers block blocks head heads
+baseline baselines benchmark benchmarks sota state-of-the-art comparison compared
+existing previous recent current novel new standard general specific common typical
+high low large small multiple different various diverse complex simple efficient effective
+robust flexible scalable fast slow good better best first second third
+significant significantly substantial substantially considerable considerably notable notably
+effective effectively efficient efficiently robust robustly flexible flexibly
+general generally specific specifically standard standardly typical typically
+common commonly popular widely broad broadly
+challenge challenges ability capabilities limitation limitations advantage advantages
+information knowledge context understanding quality aspect aspects
+through without within across between among about upon whether
+however although while since based given often called
+thus hence moreover therefore furthermore additionally also too yet already
+nearly almost always never sometimes usually normally often
+rather quite very still could would should which this those with
+after before during since until unless because although despite
+lack lacks lacked suffer suffers suffered lacking`.split(/\s+/));
 
 const WC_COLORS = [
   "#4FB6C6","#38bdf8","#7dd3fc",  // blues/teals
@@ -530,33 +545,67 @@ function showDefaultLineage(){
 function buildRatingHistogram(){
   const rated = PAPERS.filter(p=>p.rating_avg>0);
   const bins=[];
-  for(let lo=3.5;lo<10;lo+=0.5){
+  for(let lo=4.0;lo<10;lo+=0.5){
     bins.push({lo,count:rated.filter(p=>p.rating_avg>=lo&&p.rating_avg<lo+0.5).length});
   }
   new Chart($("ratingChart"),{
     type:"bar",
     data:{
       labels:bins.map(b=>b.lo.toFixed(1)),
-      datasets:[{data:bins.map(b=>b.count),backgroundColor:"#4FB6C6",borderRadius:3}]
+      datasets:[{data:bins.map(b=>b.count),backgroundColor:bins.map(b=>{
+        // color gradient: low=blue, peak=teal, high=green
+        const pct=b.lo/10;
+        return pct<0.65?"#60a5fa":pct<0.75?"#4FB6C6":"#34d399";
+      }),borderRadius:3,barPercentage:.9}]
     },
-    options:{maintainAspectRatio:false,plugins:{legend:{display:false},
-      tooltip:{callbacks:{label:ctx=>`${fmt(ctx.raw)} papers`}}},
-      scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10}},grid:{display:false}}}}
+    options:{
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${fmt(ctx.raw)} papers`}}},
+      scales:{
+        x:{ticks:{font:{size:10},maxRotation:0},grid:{display:false}},
+        y:{ticks:{font:{size:10},maxTicksLimit:5},grid:{color:"rgba(0,0,0,0.04)"}}
+      }
+    }
   });
   // Oral vs Poster doughnut
   const oral=PAPERS.filter(p=>p.status==="Oral").length;
   const poster=PAPERS.length-oral;
+  const accRate=(oral/PAPERS.length*100).toFixed(1);
   new Chart($("typeChart"),{
     type:"doughnut",
-    data:{labels:[`Oral (${fmt(oral)})`,`Poster (${fmt(poster)})`],
-          datasets:[{data:[oral,poster],backgroundColor:["#6e3ad6","#e5e5ea"],borderWidth:0}]},
-    options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{font:{size:11},padding:8}},
-      tooltip:{callbacks:{label:ctx=>`${fmt(ctx.raw)} (${(ctx.raw/PAPERS.length*100).toFixed(1)}%)`}}}}
+    data:{
+      labels:[`Oral ${accRate}%`,`Poster ${(100-parseFloat(accRate)).toFixed(1)}%`],
+      datasets:[{data:[oral,poster],backgroundColor:["#6e3ad6","#e2e8f0"],borderWidth:2,borderColor:["#6e3ad6","#e2e8f0"]}]
+    },
+    options:{
+      maintainAspectRatio:false,
+      cutout:"68%",
+      plugins:{
+        legend:{position:"bottom",labels:{font:{size:11},padding:12,boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>`${fmt(ctx.raw)} papers (${(ctx.raw/PAPERS.length*100).toFixed(1)}%)`}}
+      }
+    }
   });
 }
 
 // ── Phylum Chart ──
 let phylumChartInst;
+// shared bar chart options for horizontal charts
+function hBarOpts(tooltip, onClick){
+  return {
+    indexAxis:"y", maintainAspectRatio:false,
+    onClick,
+    layout:{padding:{right:8}},
+    plugins:{legend:{display:false}, tooltip:{callbacks:{label:tooltip}}},
+    scales:{
+      x:{ticks:{font:{size:10},maxTicksLimit:5}, grid:{color:"rgba(0,0,0,0.04)"}},
+      y:{ticks:{font:{size:11},mirror:false}, grid:{display:false}}
+    }
+  };
+}
+
+function truncLabel(s,max=28){ return s.length>max ? s.slice(0,max-1)+"…" : s; }
+
 function buildPhylumChart(){
   const cnt = {};
   PAPERS.forEach(p=>{ const ph=(p.topics||[])[0]?.phylum; if(ph) cnt[ph]=(cnt[ph]||0)+1; });
@@ -565,12 +614,13 @@ function buildPhylumChart(){
   const colors=labels.map(l=>PHYLUM_COLORS[l]||"#94a3b8");
   phylumChartInst = new Chart($("phylumChart"),{
     type:"bar",
-    data:{labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:4}]},
+    data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:colors,borderRadius:4,barPercentage:.8}]},
     options:{
-      indexAxis:"y",maintainAspectRatio:false,
-      onClick:(_,els)=>{ if(els.length) setPhylumFilter(labels[els[0].index]); },
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${fmt(ctx.raw)} papers (${(ctx.raw/PAPERS.length*100).toFixed(1)}%)`}}},
-      scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:11}},grid:{display:false}}},
+      ...hBarOpts(
+        ctx=>`${fmt(ctx.raw)} (${(ctx.raw/PAPERS.length*100).toFixed(1)}%)`,
+        (_,els)=>{ if(els.length) setPhylumFilter(labels[els[0].index]); }
+      ),
+      plugins:{...hBarOpts().plugins, tooltip:{callbacks:{label:ctx=>`${fmt(ctx.raw)} (${(ctx.raw/PAPERS.length*100).toFixed(1)}%)`}}}
     }
   });
 }
@@ -578,16 +628,12 @@ function buildPhylumChart(){
 function buildClassChart(){
   const cnt={};
   PAPERS.forEach(p=>(p.topics||[]).forEach(t=>{ cnt[t.class]=(cnt[t.class]||0)+1; }));
-  const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,16);
+  const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,14);
   const labels=rows.map(r=>r[0]),vals=rows.map(r=>r[1]);
   new Chart($("classChart"),{
     type:"bar",
-    data:{labels,datasets:[{data:vals,backgroundColor:"#4FB6C6",borderRadius:4}]},
-    options:{
-      indexAxis:"y",maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${fmt(ctx.raw)} papers`}}},
-      scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:11}},grid:{display:false}}},
-    }
+    data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:"#4FB6C6",borderRadius:4,barPercentage:.8}]},
+    options:hBarOpts(ctx=>`${fmt(ctx.raw)} papers`)
   });
 }
 
@@ -644,17 +690,16 @@ function findNode(n, name){
 function showLineage(node, name, depth){
   const kids=(node.children||[]).slice(0,20);
   if(!kids.length){ showDefaultLineage(); return; }
-  $("lineageTitle").textContent = name==="ICLR 2026 (All)" ? "All Phylums" : name;
+  $("lineageTitle").textContent = name==="ICLR 2026 (All)" ? "All Phylums" : truncLabel(name, 40);
   const labels=kids.map(k=>k.name), vals=kids.map(k=>k.paper_count||0);
-  const colors=kids.map(k=>PHYLUM_COLORS[k.name]||"#4FB6C6");
+  const colors=kids.map(k=>PHYLUM_COLORS[k.name]||(depth===0?"#94a3b8":"#4FB6C6"));
   if(lineageChartInst) lineageChartInst.destroy();
   lineageChartInst = new Chart($("lineageChart"),{
     type:"bar",
-    data:{labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:4}]},
+    data:{labels:labels.map(l=>truncLabel(l,28)),datasets:[{data:vals,backgroundColor:colors,borderRadius:4,barPercentage:.8}]},
     options:{
-      indexAxis:"y",maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${fmt(ctx.raw)} papers`}}},
-      scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:11}},grid:{display:false}}},
+      ...hBarOpts(ctx=>`${fmt(ctx.raw)} papers`),
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${fmt(vals[ctx.dataIndex])} papers — ${labels[ctx.dataIndex]}`}}}
     }
   });
 }
