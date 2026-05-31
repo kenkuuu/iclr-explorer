@@ -1,101 +1,23 @@
-"""タスク 7.1 — トピッククリック → 論文フィルタ連動の統合テスト"""
+"""Phylogeny Tree フィルタ統合テスト（Vanilla JS 版）"""
 from pathlib import Path
-
 ROOT = Path(__file__).parent.parent
-HTML = ROOT / "docs" / "index.html"
+def src(): return (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
 
-
-def src() -> str:
-    return HTML.read_text(encoding="utf-8")
-
-
-# ── TopicDistribution ↔ App 状態連動 ──────────────────────────────────────
-
-def test_topic_distribution_receives_on_topic_select():
-    """TopicDistribution に handleTopicSelect が onTopicSelect として渡されている"""
-    s = src()
-    assert "onTopicSelect={handleTopicSelect}" in s, \
-        "TopicDistribution に handleTopicSelect が渡されていない"
-
-
-def test_topic_distribution_receives_selected_topic():
-    """TopicDistribution に selectedTopic が渡されている"""
-    s = src()
-    assert "selectedTopic={selectedTopic}" in s, \
-        "TopicDistribution に selectedTopic が渡されていない"
-
-
-def test_handle_topic_select_updates_selected_topic():
-    s = src()
-    idx = s.find("handleTopicSelect")
-    assert idx != -1
-    context = s[idx: idx + 150]
-    assert "setSelectedTopic" in context, \
-        "handleTopicSelect が setSelectedTopic を呼び出していない"
-
-
-def test_handle_topic_select_resets_current_page():
-    s = src()
-    idx = s.find("handleTopicSelect")
-    assert idx != -1
-    context = s[idx: idx + 150]
-    assert "setCurrentPage(1)" in context, \
-        "handleTopicSelect でページがリセットされていない"
-
-
-def test_topic_toggle_clears_on_second_click():
-    """同じトピックを再クリックすると null になる（トグル動作）"""
-    s = src()
-    assert "selectedTopic === id ? null : id" in s or \
-           "=== id ? null : id" in s or \
-           "toggle" in s.lower() or \
-           "null : id" in s, \
-        "トピックの再クリックで null にするトグル動作が実装されていない"
-
-
-# ── アクティブフィルタインジケーター ──────────────────────────────────────
-
-def test_active_filter_indicator_exists():
-    """selectedTopic が選択中のとき、フィルタ状態を表示するインジケーターが存在する"""
-    s = src()
-    assert "selectedTopic &&" in s or "selectedTopic ?" in s, \
-        "アクティブフィルタインジケーターが存在しない"
-
-
-def test_clear_topic_filter_button_exists():
-    """トピックフィルタをクリアするボタンまたは操作が存在する"""
-    s = src()
-    # クリアボタン or null へのリセット
-    assert "handleTopicSelect(null)" in s or \
-           "setSelectedTopic(null)" in s, \
-        "トピックフィルタのクリア操作が存在しない"
-
-
-def test_filter_indicator_shows_topic_name():
-    """インジケーターにトピック名または ID が表示される"""
-    s = src()
-    # selectedTopic の内容を表示している
-    idx = s.find("selectedTopic &&")
-    if idx == -1:
-        idx = s.find("selectedTopic ?")
-    assert idx != -1
-    context = s[idx: idx + 300]
-    assert "selectedTopic" in context, \
-        "インジケーターにトピック情報が表示されていない"
-
-
-# ── filteredPapers → PaperList 連動 ─────────────────────────────────────
-
-def test_paper_list_receives_filtered_papers():
-    """PaperList が App の filteredPapers を受け取っている"""
-    s = src()
-    assert "filteredPapers={filteredPapers}" in s, \
-        "PaperList に filteredPapers が渡されていない"
-
-
-def test_filtered_papers_filters_by_selected_topic():
-    """filteredPapers の useMemo が selectedTopic でフィルタリングする"""
-    s = src()
-    assert "selectedTopic" in s
-    assert "primary_topic" in s or "secondary_topics" in s, \
-        "トピックフィルタリングロジックが実装されていない"
+def test_tree_list_container(): assert 'id="treeList"' in src()
+def test_builds_tree(): assert "buildTree" in src()
+def test_tree_node_class(): assert "tree-node" in src()
+def test_tree_row_class(): assert "tree-row" in src()
+def test_tree_row_clickable(): assert "addEventListener" in src() and "treeList" in src()  # listener bound in buildTree()
+def test_set_state_from_depth(): assert "setStateFromDepth" in src() or "state[" in src()
+def test_state_has_phylum(): assert 'state' in src() and 'phylum' in src()
+def test_state_has_class(): assert 'state' in src() and '"class"' in src() or "state.class" in src()
+def test_state_has_genus(): assert "genus" in src()
+def test_clear_state(): assert "clearStateFromDepth" in src() or "state[" in src()
+def test_lineage_chart(): assert "lineageChart" in src()
+def test_show_lineage(): assert "showLineage" in src()
+def test_active_class_on_select(): s=src(); assert "classList.add" in s and "active" in s
+def test_has_topic_section(): assert 'id="phylogeny"' in src()
+def test_filtered_uses_state(): s=src(); idx=s.find("function filtered"); ctx=s[idx:idx+600]; assert "state" in ctx
+def test_has_topic_tree(): assert "tree-row" in src() and "tree-count" in src()
+def test_paper_list_has_papers_id(): assert 'id="papers"' in src()
+def test_filter_shows_phylum_in_results(): assert "phylumFilter" in src() and "phylumChart" in src()

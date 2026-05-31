@@ -276,6 +276,7 @@ function escHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&l
 Promise.all([
   fetch("data/papers.json").then(r=>r.json()),
   fetch("data/phylogeny.json").then(r=>r.json()),
+  fetch("data/topics.json").then(r=>r.json()).catch(()=>null),
 ]).then(([pd, tree]) => {
   PAPERS = pd.papers || [];
   TREE   = tree;
@@ -308,12 +309,12 @@ function buildKpis(){
   const accRate = (PAPERS.length/TOTAL_SUBMISSIONS*100).toFixed(1);
 
   $("kpis").innerHTML = [
-    {label:"Total Submitted",  v:fmt(TOTAL_SUBMISSIONS), sub:""},
-    {label:"Accepted",         v:fmt(PAPERS.length),     sub:`${accRate}% acceptance rate`},
-    {label:"Oral",             v:fmt(oral),              sub:`${(oral/PAPERS.length*100).toFixed(1)}% of accepted`},
-    {label:"Avg. Rating",      v:avgR,                   sub:`Median: ${medR}`},
-    {label:"Phylums",          v:"10",                   sub:`${PAPERS.filter(p=>p.topics?.length>1).length.toLocaleString()} multi-labeled`},
-  ].map((k,i)=>`<div class="kpi${i===0?" total":""}">
+    {label:"Total Submitted",  v:fmt(TOTAL_SUBMISSIONS), sub:"", cls:"kpi total"},
+    {label:"Accepted",         v:fmt(PAPERS.length),     sub:`${accRate}% acceptance rate`, cls:"kpi"},
+    {label:"Oral",             v:fmt(oral),              sub:`${(oral/PAPERS.length*100).toFixed(1)}% of accepted`, cls:"kpi"},
+    {label:"Avg. Rating",      v:avgR,                   sub:`Median: ${medR}`, cls:"kpi"},
+    {label:"Phylums",          v:"10",                   sub:`${PAPERS.filter(p=>p.topics?.length>1).length.toLocaleString()} multi-labeled`, cls:"kpi"},
+  ].map(k=>`<div class="${k.cls}">
     <div class="v">${k.v}</div><div class="l">${k.label}</div><div class="sub">${k.sub}</div>
   </div>`).join("");
 

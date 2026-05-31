@@ -45,9 +45,10 @@ def transform_paper(paper: dict[str, Any]) -> dict[str, Any]:
     topics フィールド（phylogeny multi-label）は常に含める。
     """
     result = {field: paper[field] for field in PAPERS_JSON_FIELDS if field in paper}
-    # phylogeny topics を追加（存在する場合のみ）
-    if "topics" in paper:
-        result["topics"] = paper["topics"]
+    # phylogeny フィールドを追加
+    for extra in ["topics", "primary_phylum", "primary_class", "primary_order", "primary_genus"]:
+        if extra in paper:
+            result[extra] = paper[extra]
     return result
 
 
