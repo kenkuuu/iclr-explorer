@@ -2,7 +2,7 @@
 
 An interactive explorer for ICLR 2026 accepted papers (5,352 papers), organized by a 4-level semantic topic phylogeny.
 
-🔗 **Live**: [GitHub Pages URL]
+🔗 **Live Demo**: **[https://kenkuuu.github.io/iclr-explorer/](https://kenkuuu.github.io/iclr-explorer/)**
 
 ## Features
 

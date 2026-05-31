@@ -356,8 +356,8 @@ Promise.all([
 // Init
 // ════════════════════════════════════════════════
 function init(){
+  // Core content first — always runs
   buildKpis();
-  buildWordCloud();
   buildPhylumChart();
   buildClassChart();
   buildRatingHistogram();
@@ -366,6 +366,8 @@ function init(){
   populateFilters();
   bindEvents();
   renderResults();
+  // Word cloud last, async, isolated — errors won't break other content
+  setTimeout(()=>{ try{ buildWordCloud(); }catch(e){ console.warn("WordCloud error:",e); } }, 100);
 }
 
 // ── KPIs ──
@@ -439,9 +441,24 @@ const WC_COLORS = [
 ];
 
 function buildWordCloud(){
-  if(!window.WordCloud){ setTimeout(buildWordCloud,500); return; }
+  if(!window.WordCloud){ setTimeout(()=>{ try{buildWordCloud();}catch(e){} },600); return; }
   const canvas=$("wordcloudCanvas");
-  if(!canvas) return;
+  if(!canvas||!canvas.getContext) return;
+
+  // ── 星屑を先にCanvasに描画（ワードクラウドのbackgroundとして） ──
+  const W=canvas.offsetWidth||800;
+  canvas.width=W; canvas.height=380;
+  const bgCtx=canvas.getContext("2d");
+  bgCtx.fillStyle="#0f172a";
+  bgCtx.fillRect(0,0,W,380);
+  // stars
+  for(let i=0;i<80;i++){
+    const x=Math.random()*W, y=Math.random()*380, r=Math.random()*1.3+0.2;
+    bgCtx.globalAlpha=Math.random()*0.5+0.1;
+    bgCtx.fillStyle="#fff";
+    bgCtx.beginPath(); bgCtx.arc(x,y,r,0,Math.PI*2); bgCtx.fill();
+  }
+  bgCtx.globalAlpha=1;
 
   // ── 単語頻度計算 ──
   const freq={};
@@ -467,10 +484,6 @@ function buildWordCloud(){
   const scaleSize=c=>Math.round(14+((Math.log(c)-Math.log(minF))/(Math.log(maxF)-Math.log(minF)))*80);
 
   const list=words.map(([w,c])=>[w,scaleSize(c)]);
-
-  // ── Render ──
-  const W=canvas.offsetWidth||800;
-  canvas.width=W; canvas.height=380;
 
   const colorIdx={};
   WordCloud(canvas,{
@@ -502,21 +515,6 @@ function buildWordCloud(){
     },
   });
 
-  // ── Starfield background ──
-  const ctx=canvas.getContext("2d");
-  const stars=Array.from({length:60},()=>({
-    x:Math.random()*W, y:Math.random()*380,
-    r:Math.random()*1.2+0.3, a:Math.random()*0.4+0.1
-  }));
-  stars.forEach(s=>{
-    ctx.save();
-    ctx.globalAlpha=s.a;
-    ctx.fillStyle="#fff";
-    ctx.beginPath();
-    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-    ctx.fill();
-    ctx.restore();
-  });
 }
 
 // ════════════════════════════════════════════════
