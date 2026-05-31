@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>ICLR 2026 Topic Explorer</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.1.0/wordcloud2.min.js"></script>
 <style>
 :root{
   --bg:#fff;--bg-alt:#f5f5f7;--bg-soft:#fafafa;
@@ -117,6 +118,35 @@ p.lead{font-size:15px;color:var(--muted);margin-bottom:20px}
 /* ── Search mark ── */
 mark{background:#fff3a8;border-radius:2px}
 
+/* ── Word Cloud ── */
+.wordcloud-hero{
+  background:linear-gradient(135deg,#0f172a 0%,#1e293b 40%,#0c1a3a 100%);
+  border-radius:16px;margin-bottom:48px;padding:36px 32px 28px;
+  position:relative;overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.wordcloud-hero::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse at 30% 50%,rgba(79,182,198,0.08) 0%,transparent 60%),
+             radial-gradient(ellipse at 70% 30%,rgba(110,58,214,0.06) 0%,transparent 50%);
+  pointer-events:none;
+}
+.wordcloud-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;position:relative;z-index:1}
+.wordcloud-header h2{font-size:22px;font-weight:700;color:#f8fafc;letter-spacing:-.02em;margin-bottom:4px}
+.wordcloud-header p{font-size:12px;color:#64748b;margin-top:2px}
+.wordcloud-badge{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  background:rgba(79,182,198,0.15);border:1px solid rgba(79,182,198,0.25);
+  color:#4FB6C6;padding:4px 10px;border-radius:20px;white-space:nowrap}
+#wordcloudCanvas{width:100%!important;cursor:pointer;display:block;position:relative;z-index:1}
+.wordcloud-hint{font-size:11px;color:#475569;text-align:center;margin-top:12px;position:relative;z-index:1}
+.wordcloud-hint span{background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:4px}
+
+/* ── Attribution ── */
+.attribution{background:var(--bg-alt);border:1px solid var(--border-soft);border-radius:8px;
+  padding:10px 14px;font-size:12px;color:var(--muted);margin-bottom:32px;
+  display:flex;align-items:center;gap:8px}
+.attribution::before{content:"💡";font-size:14px}
+
 /* ── Responsive ── */
 @media(max-width:1000px){
   .layout{grid-template-columns:1fr}
@@ -151,6 +181,7 @@ mark{background:#fff3a8;border-radius:2px}
   <aside>
     <nav>
       <div class="section-label">Overview</div>
+      <a href="#wordcloudSection">Word Cloud</a>
       <a href="#overview">Statistics</a>
       <a href="#ratings">Ratings</a>
       <a href="#dist">Topic Distribution</a>
@@ -162,6 +193,27 @@ mark{background:#fff3a8;border-radius:2px}
   </aside>
 
   <main>
+
+    <!-- ── Attribution ── -->
+    <div class="attribution">
+      Design inspired by <a href="https://gisbi-kim.github.io/cvpr2026-explorer/output/cvpr2026_explorer.html" target="_blank" rel="noopener noreferrer">CVPR 2026 Paper Explorer</a>
+      and <a href="https://gisbi-kim.github.io/cvml-paper-phylogeny/" target="_blank" rel="noopener noreferrer">CV+ML Paper Phylogeny</a> by
+      <a href="https://github.com/gisbi-kim" target="_blank" rel="noopener noreferrer">gisbi-kim</a>.
+      Paper metadata from <a href="https://openreview.net" target="_blank" rel="noopener noreferrer">OpenReview</a> under CC0.
+    </div>
+
+    <!-- ── Word Cloud ── -->
+    <div class="wordcloud-hero" id="wordcloudSection">
+      <div class="wordcloud-header">
+        <div>
+          <h2>Abstract Word Cloud</h2>
+          <p>Top keywords extracted from 5,352 ICLR 2026 paper abstracts · Click a word to search</p>
+        </div>
+        <span class="wordcloud-badge">ICLR 2026</span>
+      </div>
+      <canvas id="wordcloudCanvas" height="380"></canvas>
+      <div class="wordcloud-hint"><span>Click any word to filter papers · larger = more frequent</span></div>
+    </div>
 
     <!-- ── Overview ── -->
     <section id="overview">
@@ -305,10 +357,12 @@ Promise.all([
 // ════════════════════════════════════════════════
 function init(){
   buildKpis();
+  buildWordCloud();
   buildPhylumChart();
   buildClassChart();
   buildRatingHistogram();
   buildTree();
+  showDefaultLineage();
   populateFilters();
   bindEvents();
   renderResults();
@@ -339,6 +393,139 @@ function buildKpis(){
     `<span class="stat-pill">${accRate}% rate</span>`,
     `<span class="stat-pill">${fmt(oral)} oral</span>`,
   ].join("");
+}
+
+// ════════════════════════════════════════════════
+// Word Cloud
+// ════════════════════════════════════════════════
+const WC_STOP = new Set(`a an the and or but in on at to for of with by from as is was are were
+be been being have has had do does did will would shall should may might must can could not that
+this these those which who what when where how we our their its it they us you your he she her
+his them some such also both each more most other than then there no only same so up if use used
+using show shows shown propose proposed demonstrate presents achieve achieves achieved model models
+method methods approach approaches paper result results performance improve improves improved task
+tasks train trained training learn learned learning data dataset set new novel problem problems
+existing previous work works however although while since based via well further without within
+two three multiple high low large small different various key main general specific standard
+current state recent thus hence moreover therefore furthermore additionally given often called
+through between across into over under about upon whether among etc first second third finally
+significantly substantially considerably notably outperform outperforms outperforming achieving
+state-of-the-art across extensive experiments experimental demonstrate demonstrates demonstrated
+showing shown effectively efficiently robustly flexibly scalably various settings challenging
+benchmark benchmarks baseline baselines compared comparison against demonstrate that shows
+results show results demonstrate obtain obtaining outperforming surpassing improving largely
+greatly widely commonly applied effective efficient robust flexible scalable address addresses
+remain remains relies rely typical typically often generally broadly simply easily directly
+address remain critical fundamental significant important major key novel propose ability enable
+allows allow make makes provide provides improve enhancing enhance build builds specifically
+ability enable allows allow makes provide provides improves enhancing enhance builds include
+includes including consider considers considering apply applies applying propose make enable
+both show high low such large small rather quite very still could would should may must our
+has have had does did will can cannot cannot while when where whether only just even though
+through which this these those with been being after before during since until unless because
+although however therefore thus hence moreover furthermore additionally also too yet already
+still nearly almost always never often sometimes generally typically usually normally usually
+lack lacks lacked lacks suffer suffers suffered suffer lacking`.split(/\s+/)));
+
+const WC_COLORS = [
+  "#4FB6C6","#38bdf8","#7dd3fc",  // blues/teals
+  "#a78bfa","#c4b5fd","#8b5cf6",  // purples
+  "#34d399","#6ee7b7","#10b981",  // greens
+  "#fbbf24","#f59e0b","#fcd34d",  // ambers
+  "#f87171","#fb923c","#f43f5e",  // reds/oranges
+  "#e879f9","#d946ef","#c026d3",  // pinks
+  "#60a5fa","#93c5fd","#2563eb",  // blue variants
+  "#4ade80","#86efac","#22c55e",  // green variants
+];
+
+function buildWordCloud(){
+  if(!window.WordCloud){ setTimeout(buildWordCloud,500); return; }
+  const canvas=$("wordcloudCanvas");
+  if(!canvas) return;
+
+  // ── 単語頻度計算 ──
+  const freq={};
+  const titleBoost = 3;
+  PAPERS.forEach(p=>{
+    const titleWords = (p.title||"").toLowerCase().match(/[a-z][a-z'-]{2,25}/g)||[];
+    const abstrWords = (p.abstract||"").toLowerCase().match(/[a-z][a-z'-]{2,25}/g)||[];
+    const kwWords    = (p.keywords||[]).map(k=>k.toLowerCase()).join(" ").match(/[a-z][a-z'-]{2,25}/g)||[];
+    [...titleWords.map(w=>({w,n:titleBoost})), ...abstrWords.map(w=>({w,n:1})), ...kwWords.map(w=>({w,n:2}))].forEach(({w,n})=>{
+      const clean=w.replace(/^['-]+|['-]+$/g,"");
+      if(clean.length<4||WC_STOP.has(clean)) return;
+      freq[clean]=(freq[clean]||0)+n;
+    });
+  });
+
+  // ── Top 200 words ──
+  const words=Object.entries(freq)
+    .filter(([w,c])=>c>=30)
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,200);
+
+  const maxF=words[0]?.[1]||1, minF=words[words.length-1]?.[1]||1;
+  const scaleSize=c=>Math.round(14+((Math.log(c)-Math.log(minF))/(Math.log(maxF)-Math.log(minF)))*80);
+
+  const list=words.map(([w,c])=>[w,scaleSize(c)]);
+
+  // ── Render ──
+  const W=canvas.offsetWidth||800;
+  canvas.width=W; canvas.height=380;
+
+  const colorIdx={};
+  WordCloud(canvas,{
+    list,
+    fontFamily:"-apple-system,BlinkMacSystemFont,'SF Pro Display',system-ui,sans-serif",
+    fontWeight:"700",
+    color:(word)=>{
+      if(!colorIdx[word]) colorIdx[word]=WC_COLORS[Math.floor(Math.random()*WC_COLORS.length)];
+      return colorIdx[word];
+    },
+    backgroundColor:"transparent",
+    rotateRatio:0.25,
+    rotationSteps:3,
+    minSize:10,
+    gridSize:Math.round(W/80),
+    weightFactor:1,
+    drawOutOfBound:false,
+    shrinkToFit:true,
+    shuffle:false,
+    hover:function(item,dimension,event){
+      canvas.style.cursor=item?"pointer":"default";
+    },
+    click:function(item){
+      if(item){
+        $("q").value=item[0];
+        page=1; renderResults();
+        $("search").scrollIntoView({behavior:"smooth",block:"start"});
+      }
+    },
+  });
+
+  // ── Starfield background ──
+  const ctx=canvas.getContext("2d");
+  const stars=Array.from({length:60},()=>({
+    x:Math.random()*W, y:Math.random()*380,
+    r:Math.random()*1.2+0.3, a:Math.random()*0.4+0.1
+  }));
+  stars.forEach(s=>{
+    ctx.save();
+    ctx.globalAlpha=s.a;
+    ctx.fillStyle="#fff";
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+// ════════════════════════════════════════════════
+// Lineage chart — default: show all phylums
+// ════════════════════════════════════════════════
+function showDefaultLineage(){
+  if(!TREE||!TREE.children) return;
+  $("lineageTitle").textContent="All Phylums";
+  showLineage(TREE,"ICLR 2026 (All)",0);
 }
 
 // ── Rating Histogram ──
@@ -457,9 +644,9 @@ function findNode(n, name){
 }
 
 function showLineage(node, name, depth){
-  const kids=(node.children||[]).slice(0,18);
-  if(!kids.length){ clearLineageChart(); return; }
-  $("lineageTitle").textContent = name;
+  const kids=(node.children||[]).slice(0,20);
+  if(!kids.length){ showDefaultLineage(); return; }
+  $("lineageTitle").textContent = name==="ICLR 2026 (All)" ? "All Phylums" : name;
   const labels=kids.map(k=>k.name), vals=kids.map(k=>k.paper_count||0);
   const colors=kids.map(k=>PHYLUM_COLORS[k.name]||"#4FB6C6");
   if(lineageChartInst) lineageChartInst.destroy();
@@ -475,8 +662,8 @@ function showLineage(node, name, depth){
 }
 
 function clearLineageChart(){
-  $("lineageTitle").textContent="Select a node to explore";
   if(lineageChartInst){ lineageChartInst.destroy(); lineageChartInst=null; }
+  showDefaultLineage();
 }
 
 function setStateFromDepth(name, depth){
@@ -648,5 +835,16 @@ function bindEvents(){
   });
 }
 </script>
+
+<footer style="background:linear-gradient(180deg,var(--bg-alt) 0%,var(--bg) 100%);border-top:1px solid var(--border-soft);padding:32px 24px 24px;font-size:12px;color:var(--muted);text-align:center;line-height:2">
+  Paper metadata from <a href="https://openreview.net" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">OpenReview</a> under <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">CC0</a> ·
+  PDF copyright belongs to respective authors<br>
+  <span style="color:var(--muted-2)">Design inspired by </span>
+  <a href="https://gisbi-kim.github.io/cvpr2026-explorer/output/cvpr2026_explorer.html" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">CVPR 2026 Paper Explorer</a>
+  &amp;
+  <a href="https://gisbi-kim.github.io/cvml-paper-phylogeny/" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">CV+ML Paper Phylogeny</a>
+  <span style="color:var(--muted-2)">by</span>
+  <a href="https://github.com/gisbi-kim" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">gisbi-kim</a>
+</footer>
 </body>
 </html>
