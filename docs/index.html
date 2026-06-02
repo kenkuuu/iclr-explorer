@@ -540,12 +540,21 @@ function buildClassChart(){
   PAPERS.forEach(p=>(p.topics||[]).forEach(t=>{ cnt[t.class]=(cnt[t.class]||0)+1; }));
   const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,14);
   const labels=rows.map(r=>r[0]),vals=rows.map(r=>r[1]);
-  // Classes: 所属 Phylum の色を 45% 白と混ぜた中間色
-  const classColors = labels.map(l=>lighten(CLASS_COLOR_MAP[l]||"#94a3b8", 0.45));
+  // Classes: Phylum 色を 22% 白混合（ほど良い中間色）
+  const classColors = labels.map(l=>lighten(CLASS_COLOR_MAP[l]||"#94a3b8", 0.22));
   new Chart($("classChart"),{
     type:"bar",
     data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:classColors,borderRadius:4,barPercentage:.8}]},
-    options:hBarOpts(ctx=>`${fmt(ctx.raw)} papers`)
+    options:hBarOpts(
+      ctx=>`${fmt(ctx.raw)} papers`,
+      (_,els)=>{
+        if(!els.length) return;
+        const cls=labels[els[0].index];
+        state.class = state.class===cls ? "" : cls;
+        state.genus=""; page=1; renderResults();
+        $("search").scrollIntoView({behavior:"smooth",block:"start"});
+      }
+    )
   });
 }
 
@@ -554,12 +563,21 @@ function buildGenusChart(){
   PAPERS.forEach(p=>(p.topics||[]).forEach(t=>{ if(t.genus) cnt[t.genus]=(cnt[t.genus]||0)+1; }));
   const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,14);
   const labels=rows.map(r=>r[0]),vals=rows.map(r=>r[1]);
-  // Genera: 所属 Phylum の色を 68% 白と混ぜた淡色
-  const genusColors = labels.map(l=>lighten(GENUS_COLOR_MAP[l]||"#94a3b8", 0.68));
+  // Genera: Phylum 色を 44% 白混合（Classes より淡く、読みやすい色）
+  const genusColors = labels.map(l=>lighten(GENUS_COLOR_MAP[l]||"#94a3b8", 0.44));
   new Chart($("genusChart"),{
     type:"bar",
     data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:genusColors,borderRadius:4,barPercentage:.8}]},
-    options:hBarOpts(ctx=>`${fmt(ctx.raw)} papers`)
+    options:hBarOpts(
+      ctx=>`${fmt(ctx.raw)} papers`,
+      (_,els)=>{
+        if(!els.length) return;
+        const genus=labels[els[0].index];
+        state.genus = state.genus===genus ? "" : genus;
+        page=1; renderResults();
+        $("search").scrollIntoView({behavior:"smooth",block:"start"});
+      }
+    )
   });
 }
 
