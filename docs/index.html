@@ -58,10 +58,8 @@ p.lead{font-size:15px;color:var(--muted);margin-bottom:20px}
 
 /* ── Two-col ── */
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.chart-box{background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;padding:16px;min-width:0;overflow:hidden}
-.chart-box.tall{height:420px}
-.chart-box canvas{max-width:100%!important}
-.chart-box .chart-inner{position:relative;height:calc(100% - 28px)}
+.chart-box{background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;padding:16px;min-width:0}
+.chart-box canvas{display:block;width:100%!important}
 .chart-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:12px}
 
 /* ── Tree panel ── */
@@ -195,13 +193,17 @@ mark{background:#fff3a8;border-radius:2px}
     <!-- ── Rating Distribution ── -->
     <section id="ratings" style="margin-bottom:48px">
       <div class="two-col">
-        <div class="chart-box" style="height:260px">
+        <div class="chart-box">
           <div class="chart-title">Rating Distribution (bin 0.5)</div>
-          <canvas id="ratingChart"></canvas>
+          <div style="position:relative;height:190px">
+            <canvas id="ratingChart"></canvas>
+          </div>
         </div>
-        <div class="chart-box" style="height:260px">
+        <div class="chart-box">
           <div class="chart-title">Oral vs Poster</div>
-          <canvas id="typeChart"></canvas>
+          <div style="position:relative;height:190px">
+            <canvas id="typeChart"></canvas>
+          </div>
         </div>
       </div>
     </section>
@@ -211,13 +213,17 @@ mark{background:#fff3a8;border-radius:2px}
       <h2>Topic Distribution</h2>
       <p class="lead">Click any bar to filter papers by topic.</p>
       <div class="two-col">
-        <div class="chart-box tall">
+        <div class="chart-box">
           <div class="chart-title">By Phylum</div>
-          <canvas id="phylumChart"></canvas>
+          <div style="position:relative;height:380px">
+            <canvas id="phylumChart"></canvas>
+          </div>
         </div>
-        <div class="chart-box tall">
+        <div class="chart-box">
           <div class="chart-title">Top Classes</div>
-          <canvas id="classChart"></canvas>
+          <div style="position:relative;height:380px">
+            <canvas id="classChart"></canvas>
+          </div>
         </div>
       </div>
     </section>
@@ -228,9 +234,11 @@ mark{background:#fff3a8;border-radius:2px}
       <p class="lead">Phylum → Class → Order → Genus · Click a node to filter papers.</p>
       <div class="tree-panel">
         <div class="tree-list" id="treeList"></div>
-        <div class="chart-box tall">
-          <div class="chart-title" id="lineageTitle">Select a node to explore</div>
-          <canvas id="lineageChart"></canvas>
+        <div class="chart-box">
+          <div class="chart-title" id="lineageTitle">All Phylums</div>
+          <div style="position:relative;height:380px">
+            <canvas id="lineageChart"></canvas>
+          </div>
         </div>
       </div>
     </section>
