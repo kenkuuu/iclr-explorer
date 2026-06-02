@@ -56,8 +56,16 @@ p.lead{font-size:15px;color:var(--muted);margin-bottom:20px}
 .kpi .sub{font-size:10px;color:var(--muted-2);margin-top:2px;
            white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* ── Two-col ── */
+/* ── Two-col / Three-col ── */
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.phylo-explain{background:var(--bg-alt);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:20px;font-size:13px;
+  color:var(--text-2);line-height:1.7}
+.phylo-explain strong{color:var(--text)}
+.phylo-levels{display:flex;gap:0;margin:10px 0 4px;font-size:12px;flex-wrap:wrap}
+.phylo-level{padding:4px 12px;font-weight:600;color:#fff;border-radius:4px}
+.phylo-arrow{display:flex;align-items:center;padding:0 6px;color:var(--muted-2);font-size:14px}
 .chart-box{background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;padding:16px;min-width:0}
 .chart-box canvas{display:block;width:100%!important}
 .chart-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:12px}
@@ -133,7 +141,7 @@ mark{background:#fff3a8;border-radius:2px}
   .layout{grid-template-columns:1fr}
   aside{display:none}
   .kpis{grid-template-columns:repeat(3,1fr)}
-  .two-col,.tree-panel{grid-template-columns:1fr}
+  .two-col,.three-col,.tree-panel{grid-template-columns:1fr}
 }
 @media(max-width:640px){
   .layout{padding:0 12px}
@@ -211,18 +219,24 @@ mark{background:#fff3a8;border-radius:2px}
     <!-- ── Topic Distribution ── -->
     <section id="dist">
       <h2>Topic Distribution</h2>
-      <p class="lead">Click any bar to filter papers by topic.</p>
-      <div class="two-col">
+      <p class="lead">Click any bar to filter papers · data from 5,352 accepted papers × multi-label (up to 3 tags/paper)</p>
+      <div class="three-col">
         <div class="chart-box">
-          <div class="chart-title">By Phylum</div>
-          <div style="position:relative;height:380px">
+          <div class="chart-title">Top Phyla</div>
+          <div style="position:relative;height:340px">
             <canvas id="phylumChart"></canvas>
           </div>
         </div>
         <div class="chart-box">
           <div class="chart-title">Top Classes</div>
-          <div style="position:relative;height:380px">
+          <div style="position:relative;height:340px">
             <canvas id="classChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Top Genera</div>
+          <div style="position:relative;height:340px">
+            <canvas id="genusChart"></canvas>
           </div>
         </div>
       </div>
@@ -231,7 +245,29 @@ mark{background:#fff3a8;border-radius:2px}
     <!-- ── Phylogeny Tree ── -->
     <section id="phylogeny">
       <h2>Topic Phylogeny</h2>
-      <p class="lead">Phylum → Class → Order → Genus · Click a node to filter papers.</p>
+
+      <!-- 説明文 -->
+      <div class="phylo-explain">
+        <strong>What is Topic Phylogeny?</strong>
+        Papers are organized in a <strong>4-level hierarchy</strong> inspired by biological taxonomy,
+        where broad research areas are progressively subdivided into specific methods and tasks.<br>
+        <div class="phylo-levels">
+          <span class="phylo-level" style="background:#4FB6C6">Phylum</span>
+          <span class="phylo-arrow">→</span>
+          <span class="phylo-level" style="background:#70AD47">Class</span>
+          <span class="phylo-arrow">→</span>
+          <span class="phylo-level" style="background:#E07B54">Order</span>
+          <span class="phylo-arrow">→</span>
+          <span class="phylo-level" style="background:#7B5EA7">Genus</span>
+        </div>
+        <strong>Example:</strong>
+        <em>Large Language Models</em> → <em>LLM Reasoning</em> → <em>Mathematical &amp; Code Reasoning</em> → <em>Math / Code</em><br>
+        Classification is <strong>task/domain-first</strong>: a paper using diffusion for protein design
+        is tagged as <em>Scientific Applications</em>, not just <em>Generative Models</em>.
+        Each paper receives up to 3 tags from different Phyla.
+      </div>
+
+      <p class="lead" style="margin-bottom:12px">Click a node to explore its children and filter papers.</p>
       <div class="tree-panel">
         <div class="tree-list" id="treeList"></div>
         <div class="chart-box">
@@ -338,6 +374,7 @@ function init(){
   buildKpis();
   buildPhylumChart();
   buildClassChart();
+  buildGenusChart();
   buildRatingHistogram();
   buildTree();
   showDefaultLineage();
@@ -477,7 +514,19 @@ function buildClassChart(){
   const labels=rows.map(r=>r[0]),vals=rows.map(r=>r[1]);
   new Chart($("classChart"),{
     type:"bar",
-    data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:"#4FB6C6",borderRadius:4,barPercentage:.8}]},
+    data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:"#70AD47",borderRadius:4,barPercentage:.8}]},
+    options:hBarOpts(ctx=>`${fmt(ctx.raw)} papers`)
+  });
+}
+
+function buildGenusChart(){
+  const cnt={};
+  PAPERS.forEach(p=>(p.topics||[]).forEach(t=>{ if(t.genus) cnt[t.genus]=(cnt[t.genus]||0)+1; }));
+  const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,14);
+  const labels=rows.map(r=>r[0]),vals=rows.map(r=>r[1]);
+  new Chart($("genusChart"),{
+    type:"bar",
+    data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:"#7B5EA7",borderRadius:4,barPercentage:.8}]},
     options:hBarOpts(ctx=>`${fmt(ctx.raw)} papers`)
   });
 }
