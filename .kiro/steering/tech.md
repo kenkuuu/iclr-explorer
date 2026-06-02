@@ -2,86 +2,66 @@
 
 ## システム全体構成（2 層）
 
-本システムは「ビルドパイプライン」と「静的フロントエンド」の 2 層で構成される。ビルドパイプライン（Python）はオフラインで一度だけ実行し、生成した静的ファイルを GitHub Pages にデプロイする。ブラウザからのリアルタイム API 通信は発生しない。
+**ビルドパイプライン**（Python、オフライン実行）→ 静的ファイル → **GitHub Pages**（静的配信）
+
+ブラウザからのリアルタイム API 通信は発生しない。
 
 | レイヤ | 技術スタック | 役割 |
 |--------|------------|------|
-| データ取得 | Python 3.11 + openreview-py | OpenReview API から採択論文メタデータを取得し papers_raw.json として保存 |
-| トピック分類 | Python 3.11 + google-genai | 50 件バッチで Gemini API を呼び出し、各論文にトピックタグを付与 |
-| データ変換 | Python 3.11（pandas） | 分類済みデータを UI 最適化 JSON（papers.json, topics.json）に変換 |
-| フロントエンド | HTML + React 18（CDN）+ Recharts | 単一 HTML ファイルで構成された SPA。外部依存は CDN 読み込みのみ |
-| ホスティング | GitHub Pages | 静的ファイルを無料 CDN で配信。カスタムドメイン任意 |
+| データ取得 | Python 3.11 + openreview-py 2.x | OpenReview API v2 から採択論文を取得 |
+| Phylogeny 分類 | Python 3.11（keyword matching） | キーワードマッチング（API 不要、ローカル実行） |
+| JSON 生成 | Python 3.11 + pandas | papers.json / topics.json / phylogeny.json を生成 |
+| フロントエンド | **Vanilla JS + Chart.js + wordcloud2.js** | 単一 HTML ファイル（React なし、ビルドツールなし） |
+| ホスティング | GitHub Pages（`docs/` ブランチ） | 静的 CDN 配信 |
 
 ## ビルドパイプライン（Python）
 
-- **Python バージョン**: 3.11
+- **Python バージョン**: 3.13（uv が自動管理）
 - **パッケージ管理**: uv（pyproject.toml + uv.lock）
-- **主要ライブラリ**:
-  - `openreview-py` — OpenReview API v2 クライアント
-  - `google-genai` — Gemini API（Google Gen AI Python SDK）
-  - `pandas` — データ集計・変換
-
-## Gemini API 仕様
-
-| 項目 | 値 |
-|------|-----|
-| 使用モデル | `gemini-3.5-flash` |
-| バッチサイズ | 50 件 / リクエスト（プロンプト ~4,000 tokens 目安） |
-| 出力形式 | structured output（JSON Schema ネイティブ、Pydantic 直接対応） |
-| リトライ | エラー・タイムアウト時は最大 3 回 |
-| 推定コスト | ~$0.5〜1 USD（入力 $1.50/MTok, 出力 $9.00/MTok 試算） |
-| API キー管理 | GitHub Actions Secrets（`GEMINI_API_KEY`）に保管。コードに直書き禁止 |
+- **主要ライブラリ**: `openreview-py`、`pandas`、`pydantic`
+- **Gemini API**: 当初予定したが、無償枠制限により **使用中止**。分類はローカルキーワードマッチングに変更。
 
 ## OpenReview API 仕様
 
-| 項目 | 値 |
-|------|-----|
+| 項目 | 実測値 |
+|------|--------|
 | Base URL | `https://api2.openreview.net` |
-| エンドポイント | `GET /notes?invitation=ICLR.cc/2026/Conference/-/Submission&details=directReplies` |
+| Invitation | `ICLR.cc/2026/Conference/-/Submission` |
+| venueid フィルタ | `content.venueid=ICLR.cc/2026/Conference`（採択論文のみ取得） |
 | 認証 | 不要（匿名アクセス） |
-| ページネーション | offset / limit パラメータ（limit 最大 1000） |
-| レート制限 | 明示なし。リクエスト間 0.5 秒スリープを自主設定 |
+| 採択判定 | `note.content.venueid.value == venue_id`（Decision ノードは使わない） |
+| ステータス判定 | `note.content.venue.value`（例: "ICLR 2026 Oral"） |
+| Rating | `directReplies` の `parentInvitations` に `Official_Review` を含むノードの `content.rating.value` |
+| 取得件数 | 5,352 件（Oral: 224 / Poster: 5,128） |
 
-## フロントエンド CDN 依存
+## Phylogeny 分類アルゴリズム
+
+- **アプローチ**: キーワードマッチング（`scripts/classify_phylogeny.py`）
+- **スコアリング**: Domain keywords × 5.0 / Task keywords × 3.0 / Method keywords × 1.0
+- **原則**: Task/Domain first（CVPR Explorer の methodology に準拠）
+- **Multi-label**: 1 論文に最大 3 タグ、異なる Phylum から選択（多様性確保）
+- **100% coverage**: スコア 0 の論文は "Benchmark/Dataset" または "Machine Learning" catch-all へ
+- **再分類手順**: `data/phylogeny.json` を編集 → `uv run scripts/classify_phylogeny.py` → `uv run scripts/build_json.py`
+
+## フロントエンド技術スタック
 
 | ライブラリ | バージョン | 用途 | CDN |
 |-----------|----------|------|-----|
-| React | 18.x | UI コンポーネント管理 | esm.sh |
-| ReactDOM | 18.x | DOM レンダリング | esm.sh |
-| Recharts | 2.x | チャート・グラフ描画 | esm.sh |
-| Babel Standalone | 7.x | JSX トランスパイル（開発時のみ） | cdnjs |
+| Chart.js | 4.4.1 | 棒グラフ・ドーナツチャート | jsdelivr |
+| wordcloud2.js | 1.1.0 | フレーズワードクラウド | cdnjs |
 
-- **ビルドツール不要**（webpack / Vite 等は使用しない）
-- フロントエンドは単一 HTML ファイル（`docs/index.html`）で完結
+- **React / Babel / Recharts は使用していない**（当初スペックから変更）
+- フロントエンドは `docs/index.html` の単一ファイルで完結（Vanilla JS）
+- フィルタ・検索・ページネーションはすべてブラウザ内 JS で処理
 
-## 非機能要件（技術的制約）
+## セキュリティ
 
-| 要件 | 目標値 |
-|------|-------|
-| 初回ページロード（papers.json 読み込み含む） | 3 秒以内（LTE 環境） |
-| フィルタ・ソート操作レスポンス | 100ms 以内（ブラウザ内処理） |
-| papers.json ファイルサイズ | 圧縮後 2MB 以内（gzip） |
-| ビルドパイプライン全体の実行時間 | 60 分以内（Gemini API 分類込み） |
-| Gemini API 分類エラー率 | 5% 超でビルド中断してアラート |
+- 公開 JSON に個別レビュアースコア・reviewer ID を含めない
+- 外部リンクに `rel="noopener noreferrer"` を付与
+- XSS 対策: `escHtml()` で全ユーザー表示文字列をエスケープ（innerHTML 直書きなし）
 
-## セキュリティ制約
+## 保守性
 
-- Gemini API キーはブラウザから直接呼び出し禁止（ビルド時のみ実行）
-- 公開 JSON に個別レビュアーの評価スコア（個人情報）を含めない
-- XSS 対策: React の JSX エスケープを利用し innerHTML 直接操作を行わない
-- 外部リンク（OpenReview）には `rel="noopener noreferrer"` を付与
-
-## 保守性・拡張性
-
-- ビルドスクリプトは ICLR 2027 等の別年度への切り替えが設定変更のみで可能
-- トピック定義（`topics.json`）は外部 JSON ファイルとして管理し、コード変更なしで更新可能
-
-## CI/CD（オプション）
-
-GitHub Actions による自動化（4 ジョブ構成）:
-1. **fetch** — `fetch_papers.py` 実行、papers_raw.json を artifact 保存
-2. **classify** — `classify_topics.py` 実行（`secrets.GEMINI_API_KEY` 参照）
-3. **build** — `build_json.py` 実行し docs/ を更新
-4. **deploy** — github-pages Action で docs/ をデプロイ
-
-Trigger: main ブランチへの手動実行（`workflow_dispatch`）
+- Phylogeny 定義は `data/phylogeny.json` の keywords を編集するだけで再分類可能
+- 年度切り替えは `DEFAULT_VENUE_ID` 定数の変更のみ
+- データ更新フロー: `classify_phylogeny.py` → `build_json.py` → `git push`（Pages 自動更新）
