@@ -446,7 +446,7 @@ function truncLabel(s,max=28){ return s.length>max ? s.slice(0,max-1)+"…" : s;
 function buildPhylumChart(){
   const cnt = {};
   PAPERS.forEach(p=>{ const ph=(p.topics||[])[0]?.phylum; if(ph) cnt[ph]=(cnt[ph]||0)+1; });
-  const rows = Object.entries(cnt).sort((a,b)=>a[1]-b[1]);  // ascending
+  const rows = Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
   const labels=rows.map(r=>r[0]), vals=rows.map(r=>r[1]);
   const colors=labels.map(l=>PHYLUM_COLORS[l]||"#94a3b8");
   phylumChartInst = new Chart($("phylumChart"),{
@@ -465,7 +465,7 @@ function buildPhylumChart(){
 function buildClassChart(){
   const cnt={};
   PAPERS.forEach(p=>(p.topics||[]).forEach(t=>{ cnt[t.class]=(cnt[t.class]||0)+1; }));
-  const rows=Object.entries(cnt).sort((a,b)=>a[1]-b[1]).slice(-14);  // ascending, top 14
+  const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,14);
   const labels=rows.map(r=>r[0]),vals=rows.map(r=>r[1]);
   new Chart($("classChart"),{
     type:"bar",
@@ -478,7 +478,7 @@ function buildClassChart(){
 let lineageChartInst;
 function nodeHtml(n, depth=0){
   // Sort children ascending by paper_count
-  const kids = [...(n.children||[])].sort((a,b)=>(a.paper_count||0)-(b.paper_count||0));
+  const kids = [...(n.children||[])].sort((a,b)=>(b.paper_count||0)-(a.paper_count||0));
   const cntTxt = n.paper_count>0 ? `<span class="tree-count">${fmt(n.paper_count)}</span>` : "";
   const isRoot = depth===0 && n.name===TREE.name;
   if(isRoot) return kids.map(k=>nodeHtml(k,0)).join("");
@@ -527,7 +527,7 @@ function findNode(n, name){
 
 function showLineage(node, name, depth){
   // Sort ascending by paper_count
-  const kids=[...(node.children||[])].sort((a,b)=>(a.paper_count||0)-(b.paper_count||0)).slice(0,20);
+  const kids=[...(node.children||[])].sort((a,b)=>(b.paper_count||0)-(a.paper_count||0)).slice(0,20);
   if(!kids.length){ showDefaultLineage(); return; }
   $("lineageTitle").textContent = name==="ICLR 2026 (All)" ? "All Phylums" : truncLabel(name, 40);
   const labels=kids.map(k=>k.name), vals=kids.map(k=>k.paper_count||0);
