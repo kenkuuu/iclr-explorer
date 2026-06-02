@@ -252,13 +252,13 @@ mark{background:#fff3a8;border-radius:2px}
         Papers are organized in a <strong>4-level hierarchy</strong> inspired by biological taxonomy,
         where broad research areas are progressively subdivided into specific methods and tasks.<br>
         <div class="phylo-levels">
-          <span class="phylo-level" style="background:hsl(199,72%,26%)">Phylum</span>
+          <span class="phylo-level" style="background:#4FB6C6">Phylum</span>
           <span class="phylo-arrow">→</span>
-          <span class="phylo-level" style="background:hsl(199,64%,38%)">Class</span>
+          <span class="phylo-level" style="background:#8fd3dc">Class</span>
           <span class="phylo-arrow">→</span>
-          <span class="phylo-level" style="background:hsl(199,56%,50%)">Order</span>
+          <span class="phylo-level" style="background:#b8e6eb;color:#1e5a63">Order</span>
           <span class="phylo-arrow">→</span>
-          <span class="phylo-level" style="background:hsl(199,46%,65%);color:#1e3a5f">Genus</span>
+          <span class="phylo-level" style="background:#d9f2f5;color:#1e5a63">Genus</span>
         </div>
         <strong>Example:</strong>
         <em>Large Language Models</em> → <em>LLM Reasoning</em> → <em>Mathematical &amp; Code Reasoning</em> → <em>Math / Code</em><br>
@@ -347,6 +347,32 @@ const PHYLUM_COLORS = {
 };
 const PALETTE = Object.values(PHYLUM_COLORS);
 
+// ── 同一 Phylum 同系色：Class は中間色、Genus は淡色 ──
+// hex を white と混合して明るくする（t=0: 元色, t=1: 白）
+function lighten(hex, t){
+  const n=parseInt((hex||"#94a3b8").replace("#",""),16);
+  const r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  const mix=c=>Math.round(c+(255-c)*t);
+  return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
+}
+
+// TREE ロード後に構築: class/genus 名 → phylum base color
+let CLASS_COLOR_MAP={}, GENUS_COLOR_MAP={};
+function buildTopicColorMaps(){
+  if(!TREE) return;
+  TREE.children.forEach(phylum=>{
+    const base=PHYLUM_COLORS[phylum.name]||"#94a3b8";
+    (phylum.children||[]).forEach(cls=>{
+      CLASS_COLOR_MAP[cls.name]=base;
+      (cls.children||[]).forEach(order=>{
+        (order.children||[]).forEach(genus=>{
+          GENUS_COLOR_MAP[genus.name]=base;
+        });
+      });
+    });
+  });
+}
+
 const $ = id => document.getElementById(id);
 const fmt = n => Number(n).toLocaleString();
 function escHtml(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") }
@@ -372,6 +398,7 @@ Promise.all([
 function init(){
   // Core content first — always runs
   buildKpis();
+  buildTopicColorMaps();
   buildPhylumChart();
   buildClassChart();
   buildGenusChart();
@@ -488,21 +515,13 @@ function hBarOpts(tooltip, onClick){
 
 function truncLabel(s,max=28){ return s.length>max ? s.slice(0,max-1)+"…" : s; }
 
-// ── 同系色（青-ティール）階層配色 ────────────────────────────────────────
-// Phyla（最上位）: 最暗 → 淡, Classes（中位）: 中間固定, Genera（最下位）: 最淡固定
-const HUE = 199; // 青-ティール系 hue
-const hsl = (h,s,l) => `hsl(${h},${s}%,${l}%)`;
-// Phyla: 順位 i(0=最多) に応じて濃い→薄い  (明度 20%〜56%)
-const phylaShade = (i,n) => hsl(HUE, 72, 20 + (i/Math.max(n-1,1))*36);
-const CLASS_COLOR = hsl(HUE, 58, 52);   // 中間
-const GENUS_COLOR = hsl(HUE, 45, 70);   // 淡
-
 function buildPhylumChart(){
   const cnt = {};
   PAPERS.forEach(p=>{ const ph=(p.topics||[])[0]?.phylum; if(ph) cnt[ph]=(cnt[ph]||0)+1; });
   const rows = Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
-  const n=rows.length, labels=rows.map(r=>r[0]), vals=rows.map(r=>r[1]);
-  const colors = rows.map((_,i)=>phylaShade(i,n));
+  const labels=rows.map(r=>r[0]), vals=rows.map(r=>r[1]);
+  // Phyla: 各 Phylum の固有色（そのまま・最暗）
+  const colors = labels.map(l=>PHYLUM_COLORS[l]||"#94a3b8");
   phylumChartInst = new Chart($("phylumChart"),{
     type:"bar",
     data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:colors,borderRadius:4,barPercentage:.8}]},
@@ -521,9 +540,11 @@ function buildClassChart(){
   PAPERS.forEach(p=>(p.topics||[]).forEach(t=>{ cnt[t.class]=(cnt[t.class]||0)+1; }));
   const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,14);
   const labels=rows.map(r=>r[0]),vals=rows.map(r=>r[1]);
+  // Classes: 所属 Phylum の色を 45% 白と混ぜた中間色
+  const classColors = labels.map(l=>lighten(CLASS_COLOR_MAP[l]||"#94a3b8", 0.45));
   new Chart($("classChart"),{
     type:"bar",
-    data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:CLASS_COLOR,borderRadius:4,barPercentage:.8}]},
+    data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:classColors,borderRadius:4,barPercentage:.8}]},
     options:hBarOpts(ctx=>`${fmt(ctx.raw)} papers`)
   });
 }
@@ -533,9 +554,11 @@ function buildGenusChart(){
   PAPERS.forEach(p=>(p.topics||[]).forEach(t=>{ if(t.genus) cnt[t.genus]=(cnt[t.genus]||0)+1; }));
   const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,14);
   const labels=rows.map(r=>r[0]),vals=rows.map(r=>r[1]);
+  // Genera: 所属 Phylum の色を 68% 白と混ぜた淡色
+  const genusColors = labels.map(l=>lighten(GENUS_COLOR_MAP[l]||"#94a3b8", 0.68));
   new Chart($("genusChart"),{
     type:"bar",
-    data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:GENUS_COLOR,borderRadius:4,barPercentage:.8}]},
+    data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:genusColors,borderRadius:4,barPercentage:.8}]},
     options:hBarOpts(ctx=>`${fmt(ctx.raw)} papers`)
   });
 }
