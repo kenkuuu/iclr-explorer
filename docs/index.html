@@ -252,13 +252,13 @@ mark{background:#fff3a8;border-radius:2px}
         Papers are organized in a <strong>4-level hierarchy</strong> inspired by biological taxonomy,
         where broad research areas are progressively subdivided into specific methods and tasks.<br>
         <div class="phylo-levels">
-          <span class="phylo-level" style="background:#4FB6C6">Phylum</span>
+          <span class="phylo-level" style="background:hsl(199,72%,26%)">Phylum</span>
           <span class="phylo-arrow">→</span>
-          <span class="phylo-level" style="background:#70AD47">Class</span>
+          <span class="phylo-level" style="background:hsl(199,64%,38%)">Class</span>
           <span class="phylo-arrow">→</span>
-          <span class="phylo-level" style="background:#E07B54">Order</span>
+          <span class="phylo-level" style="background:hsl(199,56%,50%)">Order</span>
           <span class="phylo-arrow">→</span>
-          <span class="phylo-level" style="background:#7B5EA7">Genus</span>
+          <span class="phylo-level" style="background:hsl(199,46%,65%);color:#1e3a5f">Genus</span>
         </div>
         <strong>Example:</strong>
         <em>Large Language Models</em> → <em>LLM Reasoning</em> → <em>Mathematical &amp; Code Reasoning</em> → <em>Math / Code</em><br>
@@ -488,12 +488,21 @@ function hBarOpts(tooltip, onClick){
 
 function truncLabel(s,max=28){ return s.length>max ? s.slice(0,max-1)+"…" : s; }
 
+// ── 同系色（青-ティール）階層配色 ────────────────────────────────────────
+// Phyla（最上位）: 最暗 → 淡, Classes（中位）: 中間固定, Genera（最下位）: 最淡固定
+const HUE = 199; // 青-ティール系 hue
+const hsl = (h,s,l) => `hsl(${h},${s}%,${l}%)`;
+// Phyla: 順位 i(0=最多) に応じて濃い→薄い  (明度 20%〜56%)
+const phylaShade = (i,n) => hsl(HUE, 72, 20 + (i/Math.max(n-1,1))*36);
+const CLASS_COLOR = hsl(HUE, 58, 52);   // 中間
+const GENUS_COLOR = hsl(HUE, 45, 70);   // 淡
+
 function buildPhylumChart(){
   const cnt = {};
   PAPERS.forEach(p=>{ const ph=(p.topics||[])[0]?.phylum; if(ph) cnt[ph]=(cnt[ph]||0)+1; });
   const rows = Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
-  const labels=rows.map(r=>r[0]), vals=rows.map(r=>r[1]);
-  const colors=labels.map(l=>PHYLUM_COLORS[l]||"#94a3b8");
+  const n=rows.length, labels=rows.map(r=>r[0]), vals=rows.map(r=>r[1]);
+  const colors = rows.map((_,i)=>phylaShade(i,n));
   phylumChartInst = new Chart($("phylumChart"),{
     type:"bar",
     data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:colors,borderRadius:4,barPercentage:.8}]},
@@ -514,7 +523,7 @@ function buildClassChart(){
   const labels=rows.map(r=>r[0]),vals=rows.map(r=>r[1]);
   new Chart($("classChart"),{
     type:"bar",
-    data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:"#70AD47",borderRadius:4,barPercentage:.8}]},
+    data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:CLASS_COLOR,borderRadius:4,barPercentage:.8}]},
     options:hBarOpts(ctx=>`${fmt(ctx.raw)} papers`)
   });
 }
@@ -526,7 +535,7 @@ function buildGenusChart(){
   const labels=rows.map(r=>r[0]),vals=rows.map(r=>r[1]);
   new Chart($("genusChart"),{
     type:"bar",
-    data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:"#7B5EA7",borderRadius:4,barPercentage:.8}]},
+    data:{labels:labels.map(l=>truncLabel(l,26)),datasets:[{data:vals,backgroundColor:GENUS_COLOR,borderRadius:4,barPercentage:.8}]},
     options:hBarOpts(ctx=>`${fmt(ctx.raw)} papers`)
   });
 }
