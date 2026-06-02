@@ -583,17 +583,23 @@ function buildGenusChart(){
 
 // ── Tree ──
 let lineageChartInst;
-function nodeHtml(n, depth=0){
-  // Sort children ascending by paper_count
+function nodeHtml(n, depth=0, phylumColor=null){
   const kids = [...(n.children||[])].sort((a,b)=>(b.paper_count||0)-(a.paper_count||0));
   const cntTxt = n.paper_count>0 ? `<span class="tree-count">${fmt(n.paper_count)}</span>` : "";
   const isRoot = depth===0 && n.name===TREE.name;
-  if(isRoot) return kids.map(k=>nodeHtml(k,0)).join("");
+  if(isRoot) return kids.map(k=>nodeHtml(k,0,null)).join("");
+
+  // 階層に応じた同系色: phylum=基本色, 下位階層は lighten で淡く
+  const base = phylumColor || PHYLUM_COLORS[n.name] || "#94a3b8";
+  const lightAmounts = [0, 0.22, 0.38, 0.50];
+  const dotColor = lighten(base, lightAmounts[Math.min(depth,3)]);
+
   const row = `<div class="tree-row d${depth}" data-name="${escHtml(n.name)}" data-depth="${depth}">
-    <span class="tree-dot" style="opacity:${Math.max(.35,1-depth*.15)};background:${PHYLUM_COLORS[n.name]||"var(--accent)"}"></span>
+    <span class="tree-dot" style="background:${dotColor}"></span>
     <b>${escHtml(n.name)}</b>${cntTxt}
   </div>`;
-  const inner = kids.length ? `<div class="tree-node">${kids.map(k=>nodeHtml(k,depth+1)).join("")}</div>` : "";
+  const nextBase = depth===0 ? (PHYLUM_COLORS[n.name]||"#94a3b8") : base;
+  const inner = kids.length ? `<div class="tree-node">${kids.map(k=>nodeHtml(k,depth+1,nextBase)).join("")}</div>` : "";
   return `<div>${row}${inner}</div>`;
 }
 
@@ -612,7 +618,16 @@ function buildTree(){
       row.classList.add("active");
       const node = findNode(TREE, name);
       if(node){
-        showLineage(node, name, depth);
+        const hasChildren = (node.children||[]).length > 0;
+        if(hasChildren){
+          // 子を持つノード: 子を lineage チャートに表示
+          showLineage(node, name, depth);
+        } else {
+          // 末端ノード（Genus）: 親（Order）の子を表示して文脈を見せる
+          const parent = findParentNode(TREE, name);
+          if(parent) showLineage(parent, parent.name, depth-1);
+          // else lineage chart はそのまま
+        }
         setStateFromDepth(name, depth);
       }
     } else {
@@ -632,13 +647,31 @@ function findNode(n, name){
   return null;
 }
 
+function findParentNode(tree, targetName, parent=null){
+  if(tree.name===targetName) return parent;
+  for(const c of (tree.children||[])){
+    const result=findParentNode(c,targetName,tree);
+    if(result!==undefined) return result;
+  }
+  return undefined;
+}
+
 function showLineage(node, name, depth){
   // Sort ascending by paper_count
   const kids=[...(node.children||[])].sort((a,b)=>(b.paper_count||0)-(a.paper_count||0)).slice(0,20);
-  if(!kids.length){ showDefaultLineage(); return; }
+  if(!kids.length) return; // 末端ノードは呼ばれない（buildTree 側で制御）
   $("lineageTitle").textContent = name==="ICLR 2026 (All)" ? "All Phylums" : truncLabel(name, 40);
   const labels=kids.map(k=>k.name), vals=kids.map(k=>k.paper_count||0);
-  const colors=kids.map(k=>PHYLUM_COLORS[k.name]||(depth===0?"#94a3b8":"#4FB6C6"));
+  // depth 0=phylum: 固有色, それ以外: 親 phylum 色を lighten
+  const lightByDepth=[0,0.22,0.38,0.50];
+  const colors=kids.map(k=>{
+    if(depth===0) return PHYLUM_COLORS[k.name]||"#94a3b8";
+    // 親ノードの phylum 色を取得
+    const phylumNode = findParentNode(TREE,k.name);
+    // phylum の色を使って lighten
+    const base = phylumNode ? (PHYLUM_COLORS[phylumNode.name]||"#94a3b8") : "#4FB6C6";
+    return lighten(base, lightByDepth[Math.min(depth,3)]);
+  });
   if(lineageChartInst) lineageChartInst.destroy();
   lineageChartInst = new Chart($("lineageChart"),{
     type:"bar",
