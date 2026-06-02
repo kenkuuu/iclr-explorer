@@ -4,9 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>ICLR 2026 Topic Explorer</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.1.0/wordcloud2.min.js"></script>
-<style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script><style>
 :root{
   --bg:#fff;--bg-alt:#f5f5f7;--bg-soft:#fafafa;
   --panel:#fff;--border:#d2d2d7;--border-soft:#e5e5ea;
@@ -125,27 +123,6 @@ p.lead{font-size:15px;color:var(--muted);margin-bottom:20px}
 mark{background:#fff3a8;border-radius:2px}
 
 /* ── Word Cloud ── */
-.wordcloud-hero{
-  background:linear-gradient(135deg,#0f172a 0%,#1e293b 40%,#0c1a3a 100%);
-  border-radius:16px;margin-bottom:48px;padding:36px 32px 28px;
-  position:relative;overflow:hidden;
-  box-shadow:0 8px 32px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.05);
-}
-.wordcloud-hero::before{
-  content:"";position:absolute;inset:0;
-  background:radial-gradient(ellipse at 30% 50%,rgba(79,182,198,0.08) 0%,transparent 60%),
-             radial-gradient(ellipse at 70% 30%,rgba(110,58,214,0.06) 0%,transparent 50%);
-  pointer-events:none;
-}
-.wordcloud-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;position:relative;z-index:1}
-.wordcloud-header h2{font-size:22px;font-weight:700;color:#f8fafc;letter-spacing:-.02em;margin-bottom:4px}
-.wordcloud-header p{font-size:12px;color:#64748b;margin-top:2px}
-.wordcloud-badge{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
-  background:rgba(79,182,198,0.15);border:1px solid rgba(79,182,198,0.25);
-  color:#4FB6C6;padding:4px 10px;border-radius:20px;white-space:nowrap}
-#wordcloudCanvas{width:100%!important;cursor:pointer;display:block;position:relative;z-index:1}
-.wordcloud-hint{font-size:11px;color:#475569;text-align:center;margin-top:12px;position:relative;z-index:1}
-.wordcloud-hint span{background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:4px}
 
 /* ── Attribution ── */
 .attribution{background:var(--bg-alt);border:1px solid var(--border-soft);border-radius:8px;
@@ -187,7 +164,6 @@ mark{background:#fff3a8;border-radius:2px}
   <aside>
     <nav>
       <div class="section-label">Overview</div>
-      <a href="#wordcloudSection">Word Cloud</a>
       <a href="#overview">Statistics</a>
       <a href="#ratings">Ratings</a>
       <a href="#dist">Topic Distribution</a>
@@ -208,18 +184,6 @@ mark{background:#fff3a8;border-radius:2px}
       Paper metadata from <a href="https://openreview.net" target="_blank" rel="noopener noreferrer">OpenReview</a> under CC0.
     </div>
 
-    <!-- ── Word Cloud ── -->
-    <div class="wordcloud-hero" id="wordcloudSection">
-      <div class="wordcloud-header">
-        <div>
-          <h2>Abstract Word Cloud</h2>
-          <p>Top keywords extracted from 5,352 ICLR 2026 paper abstracts · Click a word to search</p>
-        </div>
-        <span class="wordcloud-badge">ICLR 2026</span>
-      </div>
-      <canvas id="wordcloudCanvas" height="380"></canvas>
-      <div class="wordcloud-hint"><span>Click any word to filter papers · larger = more frequent</span></div>
-    </div>
 
     <!-- ── Overview ── -->
     <section id="overview">
@@ -231,11 +195,11 @@ mark{background:#fff3a8;border-radius:2px}
     <!-- ── Rating Distribution ── -->
     <section id="ratings" style="margin-bottom:48px">
       <div class="two-col">
-        <div class="chart-box" style="height:220px">
+        <div class="chart-box" style="height:260px">
           <div class="chart-title">Rating Distribution (bin 0.5)</div>
           <canvas id="ratingChart"></canvas>
         </div>
-        <div class="chart-box" style="height:220px">
+        <div class="chart-box" style="height:260px">
           <div class="chart-title">Oral vs Poster</div>
           <canvas id="typeChart"></canvas>
         </div>
@@ -372,8 +336,6 @@ function init(){
   populateFilters();
   bindEvents();
   renderResults();
-  // Word cloud last, async, isolated — errors won't break other content
-  setTimeout(()=>{ try{ buildWordCloud(); }catch(e){ console.warn("WordCloud error:",e); } }, 100);
 }
 
 // ── KPIs ──
@@ -403,177 +365,6 @@ function buildKpis(){
   ].join("");
 }
 
-// ════════════════════════════════════════════════
-// Word Cloud
-// ════════════════════════════════════════════════
-// ── Pre-computed phrase frequencies (Python-generated, curated) ──
-const WC_PHRASES = [
-  ["large language models",3543],["reinforcement learning",3350],["diffusion models",1276],
-  ["reasoning",4929],["language models",4762],["diffusion",3717],["multimodal",2226],
-  ["alignment",1458],["agents",1371],["fine-tuning",1026],["representation learning",716],
-  ["transformer",698],["interpretability",649],["vision-language models",613],
-  ["quantization",568],["generative models",550],["video generation",541],
-  ["flow matching",526],["foundation models",503],["policy optimization",401],
-  ["pretraining",398],["image generation",373],["gaussian splatting",342],
-  ["llm reasoning",337],["graph neural networks",221],["continual learning",302],
-  ["embodied",293],["federated learning",283],["in-context learning",275],
-  ["text-to-image",274],["reasoning models",274],["question answering",257],
-  ["hallucination",254],["preference optimization",247],["calibration",246],
-  ["llm agents",234],["time series forecasting",229],["anomaly detection",225],
-  ["optimal transport",221],["video understanding",220],["discrete diffusion",220],
-  ["image editing",212],["test-time scaling",208],["rlvr",208],["lora",202],
-  ["autonomous driving",202],["code generation",196],["spiking neural networks",112],
-  ["imitation learning",195],["video diffusion",192],["rag",187],
-  ["knowledge distillation",187],["spatial reasoning",180],["synthetic data",177],
-  ["scaling laws",177],["uncertainty quantification",176],["object detection",173],
-  ["world models",173],["safety alignment",173],["self-supervised learning",172],
-  ["moe",165],["contrastive learning",163],["offline reinforcement learning",123],
-  ["multimodal learning",162],["verifiable rewards",151],["test-time adaptation",149],
-  ["supervised fine-tuning",148],["retrieval-augmented generation",146],
-  ["out-of-distribution",140],["rlhf",118],["multi-agent reinforcement learning",78],
-  ["deep reinforcement learning",75],["novel view synthesis",102],["reward modeling",101],
-  ["domain adaptation",97],["tool use",94],["direct preference optimization",79],
-  ["visual question answering",79],["dpo",69],["sft",164],["program synthesis",41],
-  ["distribution shift",37],["autonomous agents",27],["gradient descent",198],
-];
-
-const WC_COLORS_MAP = {
-  "large language models":"#4FB6C6","language models":"#38bdf8","reasoning":"#7dd3fc",
-  "reinforcement learning":"#8b5cf6","policy optimization":"#a78bfa","embodied":"#c4b5fd",
-  "diffusion models":"#fb923c","diffusion":"#f87171","flow matching":"#fcd34d",
-  "video generation":"#f59e0b","image generation":"#fb923c","gaussian splatting":"#fbbf24",
-  "alignment":"#34d399","safety alignment":"#10b981","hallucination":"#6ee7b7","rlhf":"#34d399",
-  "agents":"#60a5fa","llm agents":"#2563eb","retrieval-augmented generation":"#93c5fd",
-  "vision-language models":"#F0B429","multimodal":"#e879f9","multimodal learning":"#d946ef",
-  "generative models":"#E07B54","discrete diffusion":"#fb923c",
-  "federated learning":"#4CAF82","federated learning":"#4ade80",
-  "quantization":"#6B7280","spiking neural networks":"#86efac",
-  "graph neural networks":"#5B8DD9","lora":"#6B7280","moe":"#475569",
-};
-const WC_PALETTE=["#4FB6C6","#38bdf8","#a78bfa","#34d399","#f59e0b","#f87171","#e879f9","#60a5fa","#4ade80","#fbbf24","#8b5cf6","#10b981","#fb923c","#2563eb","#6ee7b7"];
-
-// Keep WC_STOP minimal (only for fallback, not used for main word cloud)
-const WC_STOP = new Set(`
-a an the and or but in on at to for of with by from as is was are were be been being
-have has had do does did will would shall should may might must can could not that this
-these those which who what when where how we our their its it they us you your he she
-her his them some such both each other than then there no only same so up if
-a an the i e etc via
-model models method methods approach approaches technique techniques framework frameworks
-system systems architecture architectures network networks neural deep layer layers
-paper papers work works study studies research researchers task tasks problem problems
-setting settings condition conditions domain domains space latent
-data dataset datasets sample samples experiment experiments experimental
-train trained training learn learned learning optimize optimization optimizing
-result results performance performances evaluation evaluate evaluating
-improve improves improved improvement improving enhance enhances enhanced enhancing
-achieve achieves achieved achieving obtain obtains obtaining demonstrate demonstrates
-demonstrated demonstrating show shows shown showing present presents presented presenting
-propose propose proposed proposing introduce introduces introduced introducing develop
-develops developed developing design designs designed designing provide provides provided
-build builds built building apply applies applied applying use using used utilize utilizing
-enable enables enabling allow allows allowing address addresses addressing consider considers
-considering explore explores exploring analyze analyzes analyzing study studying investigate
-feature features representation representations embedding embeddings parameter parameters
-weight weights gradient gradients loss losses accuracy metric metrics score scores
-input inputs output outputs process processing mechanism mechanisms module modules
-operation operations function functions layer layers block blocks head heads
-baseline baselines benchmark benchmarks sota state-of-the-art comparison compared
-existing previous recent current novel new standard general specific common typical
-high low large small multiple different various diverse complex simple efficient effective
-robust flexible scalable fast slow good better best first second third
-significant significantly substantial substantially considerable considerably notable notably
-effective effectively efficient efficiently robust robustly flexible flexibly
-general generally specific specifically standard standardly typical typically
-common commonly popular widely broad broadly
-challenge challenges ability capabilities limitation limitations advantage advantages
-information knowledge context understanding quality aspect aspects
-through without within across between among about upon whether
-however although while since based given often called
-thus hence moreover therefore furthermore additionally also too yet already
-nearly almost always never sometimes usually normally often
-rather quite very still could would should which this those with
-after before during since until unless because although despite
-lack lacks lacked suffer suffers suffered lacking`.split(/\s+/));
-
-const WC_COLORS = [
-  "#4FB6C6","#38bdf8","#7dd3fc",  // blues/teals
-  "#a78bfa","#c4b5fd","#8b5cf6",  // purples
-  "#34d399","#6ee7b7","#10b981",  // greens
-  "#fbbf24","#f59e0b","#fcd34d",  // ambers
-  "#f87171","#fb923c","#f43f5e",  // reds/oranges
-  "#e879f9","#d946ef","#c026d3",  // pinks
-  "#60a5fa","#93c5fd","#2563eb",  // blue variants
-  "#4ade80","#86efac","#22c55e",  // green variants
-];
-
-function buildWordCloud(){
-  if(!window.WordCloud){ setTimeout(()=>{ try{buildWordCloud();}catch(e){console.warn(e);} },600); return; }
-  const canvas=$("wordcloudCanvas");
-  if(!canvas||!canvas.getContext) return;
-
-  const W = canvas.parentElement ? canvas.parentElement.clientWidth - 64 : 760;
-  const H = 380;
-  canvas.width  = Math.max(W, 400);
-  canvas.height = H;
-
-  // ── 背景：深い宇宙色 + 星屑 ──
-  const ctx = canvas.getContext("2d");
-  const grad = ctx.createLinearGradient(0, 0, W, H);
-  grad.addColorStop(0,   "#0c1a2e");
-  grad.addColorStop(0.5, "#0f2340");
-  grad.addColorStop(1,   "#0a1628");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
-  for(let i = 0; i < 100; i++){
-    ctx.globalAlpha = Math.random() * 0.45 + 0.05;
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(Math.random()*W, Math.random()*H, Math.random()*1.2+0.1, 0, Math.PI*2);
-    ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-
-  // ── スケーリング：対数スケール ──
-  const maxF = WC_PHRASES[0][1], minF = WC_PHRASES[WC_PHRASES.length-1][1];
-  const scaleSize = c => {
-    const t = (Math.log(c) - Math.log(minF)) / (Math.log(maxF) - Math.log(minF));
-    return Math.round(13 + t * 72);
-  };
-
-  // カラー割り当て（フレーズ別固定色）
-  const colorCache = {};
-  const getColor = word => {
-    if(!colorCache[word]){
-      colorCache[word] = WC_COLORS_MAP[word] || WC_PALETTE[Object.keys(colorCache).length % WC_PALETTE.length];
-    }
-    return colorCache[word];
-  };
-
-  const list = WC_PHRASES.map(([w, c]) => [w, scaleSize(c)]);
-
-  WordCloud(canvas, {
-    list,
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif",
-    fontWeight: "700",
-    color: (word) => getColor(word),
-    backgroundColor: "transparent",
-    rotateRatio:  0.2,
-    rotationSteps: 2,
-    minSize: 10,
-    gridSize: Math.round(W / 70),
-    drawOutOfBound: false,
-    shrinkToFit: true,
-    shuffle: false,
-    hover: (item) => { canvas.style.cursor = item ? "pointer" : "default"; },
-    click: (item) => {
-      if(!item) return;
-      $("q").value = item[0];
-      page = 1; renderResults();
-      $("search").scrollIntoView({behavior:"smooth", block:"start"});
-    },
-  });
-}
 
 // ════════════════════════════════════════════════
 // Lineage chart — default: show all phylums
@@ -622,9 +413,9 @@ function buildRatingHistogram(){
     },
     options:{
       maintainAspectRatio:false,
-      cutout:"68%",
+      cutout:"65%",
       plugins:{
-        legend:{position:"bottom",labels:{font:{size:11},padding:12,boxWidth:12}},
+        legend:{position:"right",labels:{font:{size:12},padding:16,boxWidth:14}},
         tooltip:{callbacks:{label:ctx=>`${fmt(ctx.raw)} papers (${(ctx.raw/PAPERS.length*100).toFixed(1)}%)`}}
       }
     }
@@ -655,7 +446,7 @@ function truncLabel(s,max=28){ return s.length>max ? s.slice(0,max-1)+"…" : s;
 function buildPhylumChart(){
   const cnt = {};
   PAPERS.forEach(p=>{ const ph=(p.topics||[])[0]?.phylum; if(ph) cnt[ph]=(cnt[ph]||0)+1; });
-  const rows = Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+  const rows = Object.entries(cnt).sort((a,b)=>a[1]-b[1]);  // ascending
   const labels=rows.map(r=>r[0]), vals=rows.map(r=>r[1]);
   const colors=labels.map(l=>PHYLUM_COLORS[l]||"#94a3b8");
   phylumChartInst = new Chart($("phylumChart"),{
@@ -674,7 +465,7 @@ function buildPhylumChart(){
 function buildClassChart(){
   const cnt={};
   PAPERS.forEach(p=>(p.topics||[]).forEach(t=>{ cnt[t.class]=(cnt[t.class]||0)+1; }));
-  const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,14);
+  const rows=Object.entries(cnt).sort((a,b)=>a[1]-b[1]).slice(-14);  // ascending, top 14
   const labels=rows.map(r=>r[0]),vals=rows.map(r=>r[1]);
   new Chart($("classChart"),{
     type:"bar",
@@ -686,7 +477,8 @@ function buildClassChart(){
 // ── Tree ──
 let lineageChartInst;
 function nodeHtml(n, depth=0){
-  const kids = n.children||[];
+  // Sort children ascending by paper_count
+  const kids = [...(n.children||[])].sort((a,b)=>(a.paper_count||0)-(b.paper_count||0));
   const cntTxt = n.paper_count>0 ? `<span class="tree-count">${fmt(n.paper_count)}</span>` : "";
   const isRoot = depth===0 && n.name===TREE.name;
   if(isRoot) return kids.map(k=>nodeHtml(k,0)).join("");
@@ -734,7 +526,8 @@ function findNode(n, name){
 }
 
 function showLineage(node, name, depth){
-  const kids=(node.children||[]).slice(0,20);
+  // Sort ascending by paper_count
+  const kids=[...(node.children||[])].sort((a,b)=>(a.paper_count||0)-(b.paper_count||0)).slice(0,20);
   if(!kids.length){ showDefaultLineage(); return; }
   $("lineageTitle").textContent = name==="ICLR 2026 (All)" ? "All Phylums" : truncLabel(name, 40);
   const labels=kids.map(k=>k.name), vals=kids.map(k=>k.paper_count||0);
